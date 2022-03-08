@@ -114,8 +114,8 @@ void Mob::move(float deltaTSec)
 
     // PROJECT 2: This is where your collision code will be called from
     // Mob* otherMob = checkCollision();
-    std::vector<const Entity*> otherMobs = checkCollision();
-    for (const Entity* otherMob : otherMobs) {
+    std::vector<Entity*> otherMobs = checkCollision();
+    for (Entity* otherMob : otherMobs) {
         if (otherMob) {
             processCollision(otherMob, deltaTSec);
         }
@@ -151,14 +151,14 @@ const Vec2* Mob::pickWaypoint()
 // PROJECT 2: 
 //  1) return a vector of mobs that we're colliding with
 //  2) handle collision with towers & river 
-std::vector<const Entity*> Mob::checkCollision()
+std::vector<Entity*> Mob::checkCollision()
 {
     float thisSize = this->getStats().getSize();
     Vec2 thisPos = this->getPosition();
 
-    std::vector<const Entity*> collidingMobs;
+    std::vector<Entity*> collidingMobs;
     const Player& northPlayer = Game::get().getPlayer(true);
-    for (const Entity* pOtherMob : northPlayer.getMobs())
+    for (Entity* pOtherMob : northPlayer.getMobs())
     {
         if (this == pOtherMob) 
         {
@@ -184,13 +184,12 @@ std::vector<const Entity*> Mob::checkCollision()
             r1TopEdge >= r2BottomEdge &&
             r1BottomEdge <= r2TopEdge) {
             collidingMobs.push_back(pOtherMob);
-            // std::cout << pOtherMob->getStats().getName() << std::endl;
+             std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
         }
-
     }
 
     const Player& southPlayer = Game::get().getPlayer(false);
-    for (const Entity* pOtherMob : southPlayer.getMobs())
+    for (Entity* pOtherMob : southPlayer.getMobs())
     {
         if (this == pOtherMob)
         {
@@ -216,14 +215,14 @@ std::vector<const Entity*> Mob::checkCollision()
             r1TopEdge >= r2BottomEdge &&
             r1BottomEdge <= r2TopEdge) {
             collidingMobs.push_back(pOtherMob);
-            //std::cout << pOtherMob->getStats().getName() << std::endl;
+            std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
         }
     }
 
     return collidingMobs;
 }
 
-void Mob::processCollision(const Entity* otherMob, float deltaTSec) 
+void Mob::processCollision(Entity* otherMob, float deltaTSec) 
 {
     // PROJECT 2: YOUR COLLISION HANDLING CODE GOES HERE
 
