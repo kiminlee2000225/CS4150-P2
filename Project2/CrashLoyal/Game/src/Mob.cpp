@@ -80,6 +80,11 @@ void Mob::move(float deltaTSec)
         destPos = m_pWaypoint ? *m_pWaypoint : m_Pos;
     }
 
+
+    // compare it to all mobs and turrets (for loop)
+    // have a vector of distRemaining and moveVec
+    // get the distance to other mobs
+
     // Actually do the moving
     Vec2 moveVec = destPos - m_Pos;
     float distRemaining = moveVec.normalize();
@@ -95,11 +100,72 @@ void Mob::move(float deltaTSec)
 
     if (moveDist <= distRemaining)
     {
-        m_Pos += moveVec * moveDist;
+        //const float MAX_SEE_AHEAD = 5;
+        //Vec2 ahead;
+        //ahead.x = (m_Pos.x + moveVec.normalize()) * MAX_SEE_AHEAD;
+        //ahead.y = (m_Pos.y + moveVec.normalize()) * MAX_SEE_AHEAD;
+        //Vec2 ahead2 = ahead * 0.5;
+        std::pair<Entity*, const Vec2> pair = getMostThreateningMob();
+        if (pair.first != nullptr) {
+            std::cout <<  std::string(" first ")  << std::endl;
+            Vec2 avoidanceForce;
+            avoidanceForce = pair.second - pair.first->getPosition();
+            avoidanceForce.normalize();
+            float squareRadius = ((float)sqrt(2) * pair.first->getStats().getSize()) / 2;
+            avoidanceForce *= squareRadius;
+            avoidanceForce /= m_Stats.getMass();
+
+            // 2) multiply combined steering force (acceleration) by elapsed time (deltaTSec), 
+            // add to previous velocity
+            avoidanceForce *= deltaTSec;
+
+            // moveVec += avoidanceForce;
+            // float newVelocity = m_Stats.getSpeed() + avoidanceForce;
+            // float newVelocityX = m_Stats.getSpeed() + accX;
+            // float newVelocityY = m_Stats.getSpeed() + accY;
+            float newVelocityX = m_Stats.getSpeed() + avoidanceForce.x;
+            float newVelocityY = m_Stats.getSpeed() + avoidanceForce.y;
+
+            // 3) check and clamp so speed doesn't exceed max
+            // v = d / t
+            // float moveDist = m_Stats.getSpeed() * deltaTSec;
+            // float newVelocity = distance / deltaTSec;
+            // float newVelocity = m_Stats.getSpeed(); // change
+            float maxVelocity = m_Stats.getSpeed();
+            if (newVelocityX > maxVelocity) {
+                newVelocityX = maxVelocity;
+            }
+            if (newVelocityY > maxVelocity) {
+                newVelocityY = maxVelocity;
+            }
+
+            // 4) multipy the clamped velocity by elapsed time (deltaTSec), 
+            // add to previous position
+            // float newMoveDist = newVelocity * deltaTSec;
+            float newMoveDistX = newVelocityX * deltaTSec;
+            float newMoveDistY = newVelocityY * deltaTSec;
+
+            // float newPosX = m_Pos.x + newMoveDistX;
+            // float newPosY = m_Pos.y + newMoveDistY;
+            // moveVec.x += newMoveDistX
+            // m_Pos += moveVec * newMoveDist;
+            // m_Pos += newMoveDist;
+
+            // 5) check for position is off map
+
+            // 6) set position to be the calculated/new position
+            m_Pos.x += newMoveDistX;
+            m_Pos.y += newMoveDistY;
+        }
+        else {
+            std::cout << std::string(" most threatening mob is null ") << std::endl;
+            m_Pos += moveVec * moveDist;
+        }
     }
     else
     {
         m_Pos += moveVec * distRemaining;
+        std::cout << std::string(" second ") << std::endl;
 
         // if the destination was a waypoint, find the next one and continue movement
         if (m_pWaypoint)
@@ -117,9 +183,72 @@ void Mob::move(float deltaTSec)
     std::vector<Entity*> otherMobs = checkCollision();
     for (Entity* otherMob : otherMobs) {
         if (otherMob) {
-            processCollision(otherMob, deltaTSec);
+            processCollision(otherMob, deltaTSec, moveVec);
         }
     }
+}
+
+std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
+    Entity* mostThreateningMob = nullptr;
+    // float minDist = FLT_MAX;
+    Vec2 ahead;
+    const Player& northPlayer = Game::get().getPlayer(true);
+    for (Entity* pOtherMob : northPlayer.getMobs())
+    {
+        if (this == pOtherMob)
+        {
+            continue;
+        }
+
+        const float MAX_SEE_AHEAD = 5;
+        Vec2 currAhead;
+        Vec2 moveVec = pOtherMob->getPosition() - this->getPosition();
+        currAhead.x = this->getPosition().x + moveVec.normalize() * MAX_SEE_AHEAD;
+        currAhead.y = this->getPosition().y + moveVec.normalize() * MAX_SEE_AHEAD;
+        Vec2 ahead2 = currAhead * 0.5;
+
+        bool collision = lineIntersectsMob(currAhead, ahead2, pOtherMob);
+        std::cout << collision << std::endl;
+        if (collision && (mostThreateningMob == nullptr || m_Pos.dist(pOtherMob->getPosition()) < m_Pos.dist(mostThreateningMob->getPosition()))) {
+            mostThreateningMob = pOtherMob;
+            ahead = currAhead;
+        }
+    }
+
+    //const Player& southPlayer = Game::get().getPlayer(false);
+    //for (Entity* pOtherMob : southPlayer.getMobs())
+    //{
+    //    if (this == pOtherMob)
+    //    {
+    //        continue;
+    //    }
+
+    //    const float MAX_SEE_AHEAD = 5;
+    //    Vec2 currAhead;
+    //    Vec2 moveVec = pOtherMob->getPosition() - this->getPosition();
+    //    currAhead.x = (this->getPosition().x + moveVec.normalize()) * MAX_SEE_AHEAD;
+    //    currAhead.y = (this->getPosition().y + moveVec.normalize()) * MAX_SEE_AHEAD;
+    //    Vec2 ahead2 = currAhead * 0.5;
+
+    //    bool collision = lineIntersectsMob(currAhead, ahead2, pOtherMob);
+    //    std::cout << collision << std::endl;
+    //    if (collision && (mostThreateningMob == nullptr || m_Pos.dist(pOtherMob->getPosition()) < m_Pos.dist(mostThreateningMob->getPosition()))) {
+    //        mostThreateningMob = pOtherMob;
+    //        ahead = currAhead;
+    //    }
+    //}
+    std::pair<Entity*, const Vec2> returnPair = std::make_pair(mostThreateningMob, ahead);
+    return returnPair;
+}
+
+bool Mob::lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob){
+    float mobRadius = ((float)sqrt(2) * mob->getStats().getSize()) / 2;
+    std::cout << std::string(" this mob name ") << this->getStats().getName() << std::endl;
+    std::cout << std::string(" other mob name ") << mob->getStats().getName() << std::endl;
+    std::cout << std::string(" mobRadius ") << mobRadius << std::endl;
+    std::cout << std::string(" dist ahead and mob ") << this->getPosition().dist(ahead) << std::endl;
+
+    return this->getPosition().dist(ahead) <= mobRadius || this->getPosition().dist(ahead2) <= mobRadius;
 }
 
 const Vec2* Mob::pickWaypoint()
@@ -184,7 +313,7 @@ std::vector<Entity*> Mob::checkCollision()
             r1TopEdge >= r2BottomEdge &&
             r1BottomEdge <= r2TopEdge) {
             collidingMobs.push_back(pOtherMob);
-             std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
+             //std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
         }
     }
 
@@ -215,16 +344,69 @@ std::vector<Entity*> Mob::checkCollision()
             r1TopEdge >= r2BottomEdge &&
             r1BottomEdge <= r2TopEdge) {
             collidingMobs.push_back(pOtherMob);
-            std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
+            //std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
         }
     }
 
     return collidingMobs;
 }
 
-void Mob::processCollision(Entity* otherMob, float deltaTSec) 
+void Mob::processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec) 
 {
     // PROJECT 2: YOUR COLLISION HANDLING CODE GOES HERE
+    
+    // 1) combine steering forces to apply together (acceleration)
+    // ^ is this the avoidance force?
+    //Vec2 avoidanceForce;
+    //avoidanceForce = moveVec - otherMob->getPosition();
+    //avoidanceForce.normalize();
+    //float squareRadius = ((float) sqrt(2) * otherMob->getStats().getSize()) / 2;
+    //avoidanceForce *= squareRadius;
+    //avoidanceForce /= m_Stats.getMass();
 
+    //// 2) multiply combined steering force (acceleration) by elapsed time (deltaTSec), 
+    //// add to previous velocity
+    //avoidanceForce *= deltaTSec;
+
+    //// moveVec += avoidanceForce;
+    //// float newVelocity = m_Stats.getSpeed() + avoidanceForce;
+    //// float newVelocityX = m_Stats.getSpeed() + accX;
+    //// float newVelocityY = m_Stats.getSpeed() + accY;
+    //float newVelocityX = m_Stats.getSpeed() + avoidanceForce.x;
+    //float newVelocityY = m_Stats.getSpeed() + avoidanceForce.y;
+
+    //// 3) check and clamp so speed doesn't exceed max
+    //// v = d / t
+    //// float moveDist = m_Stats.getSpeed() * deltaTSec;
+    //// float newVelocity = distance / deltaTSec;
+    //// float newVelocity = m_Stats.getSpeed(); // change
+    //float maxVelocity = m_Stats.getSpeed();
+    //if (newVelocityX > maxVelocity) {
+    //    newVelocityX = maxVelocity;
+    //}
+    //if (newVelocityY > maxVelocity) {
+    //    newVelocityY = maxVelocity;
+    //}
+
+    //// 4) multipy the clamped velocity by elapsed time (deltaTSec), 
+    //// add to previous position
+    //// float newMoveDist = newVelocity * deltaTSec;
+    //float newMoveDistX = newVelocityX * deltaTSec;
+    //float newMoveDistY = newVelocityY * deltaTSec;
+
+    //// float newPosX = m_Pos.x + newMoveDistX;
+    //// float newPosY = m_Pos.y + newMoveDistY;
+    //// moveVec.x += newMoveDistX
+    //// m_Pos += moveVec * newMoveDist;
+    //// m_Pos += newMoveDist;
+
+    //// 5) check for position is off map
+
+    //// 6) set position to be the calculated/new position
+    // m_Pos.x += newMoveDistX;
+    // m_Pos.y += newMoveDistY;
+
+    // m_Pos += moveVec * moveDist;
+    // m_Pos.x = newPosX + (moveVec.x * newMoveDistX);
+    // m_Pos.y = newPosY + (moveVec.y * newMoveDistY);
 }
-

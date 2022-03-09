@@ -46,6 +46,7 @@ void Controller_AI_KevinDill::tick(float deltaTSec)
         m_pPlayer->placeMob(iEntityStats::Giant, giantPos_Game);
         m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game);
         m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game);
+        // m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(2, 2));
     }
 }
 

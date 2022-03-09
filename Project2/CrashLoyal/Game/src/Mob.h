@@ -35,8 +35,9 @@ protected:
     void move(float deltaTSec);
     const Vec2* pickWaypoint();
     std::vector<Entity*> checkCollision();
-    void processCollision(Entity* otherMob, float deltaTSec);
-
+    void processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec);
+    std::pair<Entity*, const Vec2> getMostThreateningMob();
+    bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
 
 private:
     const Vec2* m_pWaypoint;
