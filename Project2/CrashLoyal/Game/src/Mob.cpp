@@ -98,9 +98,9 @@ void Mob::move(float deltaTSec)
         distRemaining = std::max(0.f, distRemaining);
     }
 
-    Vec2 velocityVector;
-    velocityVector.x = m_Pos.x + moveDist;
-    velocityVector.y = m_Pos.y + moveDist;
+    //Vec2 velocityVector;
+    //velocityVector.x = m_Pos.x + moveDist;
+    //velocityVector.y = m_Pos.y + moveDist;
 
     if (moveDist <= distRemaining)
     {
