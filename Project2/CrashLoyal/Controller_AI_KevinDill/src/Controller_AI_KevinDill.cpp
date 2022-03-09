@@ -45,8 +45,8 @@ void Controller_AI_KevinDill::tick(float deltaTSec)
         // Create two archers and a giant
         m_pPlayer->placeMob(iEntityStats::Giant, giantPos_Game);
         m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game);
-        m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game);
-        // m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(2, 2));
+        // m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game);
+        m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(1, 1));
     }
 }
 

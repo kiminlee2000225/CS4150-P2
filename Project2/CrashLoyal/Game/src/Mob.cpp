@@ -98,20 +98,26 @@ void Mob::move(float deltaTSec)
         distRemaining = std::max(0.f, distRemaining);
     }
 
+    Vec2 velocityVector;
+    velocityVector.x = m_Pos.x + moveDist;
+    velocityVector.y = m_Pos.y + moveDist;
+
     if (moveDist <= distRemaining)
     {
-        //const float MAX_SEE_AHEAD = 5;
-        //Vec2 ahead;
-        //ahead.x = (m_Pos.x + moveVec.normalize()) * MAX_SEE_AHEAD;
-        //ahead.y = (m_Pos.y + moveVec.normalize()) * MAX_SEE_AHEAD;
-        //Vec2 ahead2 = ahead * 0.5;
-        std::pair<Entity*, const Vec2> pair = getMostThreateningMob();
-        if (pair.first != nullptr) {
+        const float MAX_SEE_AHEAD = 5;
+        Vec2 ahead;
+        ahead.x = m_Pos.x + moveVec.normalize() *MAX_SEE_AHEAD;
+        ahead.y = m_Pos.y + moveVec.normalize() *MAX_SEE_AHEAD;
+        Vec2 ahead2 = ahead * 0.5;
+        Entity* mostThreateningMob = getMostThreateningMob(ahead, ahead2);
+        // std::pair<Entity*, const Vec2> pair = getMostThreateningMob();
+        if (mostThreateningMob != nullptr) {
+            std::cout << std::string(" most threatening mob is NOT null ") << std::endl;
             std::cout <<  std::string(" first ")  << std::endl;
             Vec2 avoidanceForce;
-            avoidanceForce = pair.second - pair.first->getPosition();
+            avoidanceForce = ahead - mostThreateningMob->getPosition();
             avoidanceForce.normalize();
-            float squareRadius = ((float)sqrt(2) * pair.first->getStats().getSize()) / 2;
+            float squareRadius = ((float)sqrt(2) * mostThreateningMob->getStats().getSize()) / 2;
             avoidanceForce *= squareRadius;
             avoidanceForce /= m_Stats.getMass();
 
@@ -158,7 +164,7 @@ void Mob::move(float deltaTSec)
             m_Pos.y += newMoveDistY;
         }
         else {
-            std::cout << std::string(" most threatening mob is null ") << std::endl;
+           //  std::cout << std::string(" most threatening mob is null ") << std::endl;
             m_Pos += moveVec * moveDist;
         }
     }
@@ -188,10 +194,11 @@ void Mob::move(float deltaTSec)
     }
 }
 
-std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
+//std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
+ Entity* Mob::getMostThreateningMob(Vec2 ahead, Vec2 ahead2) {
     Entity* mostThreateningMob = nullptr;
     // float minDist = FLT_MAX;
-    Vec2 ahead;
+    //Vec2 ahead;
     const Player& northPlayer = Game::get().getPlayer(true);
     for (Entity* pOtherMob : northPlayer.getMobs())
     {
@@ -200,18 +207,18 @@ std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
             continue;
         }
 
-        const float MAX_SEE_AHEAD = 5;
-        Vec2 currAhead;
-        Vec2 moveVec = pOtherMob->getPosition() - this->getPosition();
-        currAhead.x = this->getPosition().x + moveVec.normalize() * MAX_SEE_AHEAD;
-        currAhead.y = this->getPosition().y + moveVec.normalize() * MAX_SEE_AHEAD;
-        Vec2 ahead2 = currAhead * 0.5;
+        //const float MAX_SEE_AHEAD = 5;
+        //Vec2 currAhead;
+        //Vec2 moveVec = pOtherMob->getPosition() - this->getPosition();
+        //currAhead.x = this->getPosition().x + moveVec.normalize();
+        //currAhead.y = this->getPosition().y + moveVec.normalize();
+        //Vec2 ahead2 = currAhead * 0.5;
 
-        bool collision = lineIntersectsMob(currAhead, ahead2, pOtherMob);
-        std::cout << collision << std::endl;
+        bool collision = lineIntersectsMob(ahead, ahead2, pOtherMob);
+        // std::cout << collision << std::endl;
         if (collision && (mostThreateningMob == nullptr || m_Pos.dist(pOtherMob->getPosition()) < m_Pos.dist(mostThreateningMob->getPosition()))) {
             mostThreateningMob = pOtherMob;
-            ahead = currAhead;
+         //  ahead = currAhead;
         }
     }
 
@@ -237,18 +244,27 @@ std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
     //        ahead = currAhead;
     //    }
     //}
-    std::pair<Entity*, const Vec2> returnPair = std::make_pair(mostThreateningMob, ahead);
-    return returnPair;
+    //std::pair<Entity*, const Vec2> returnPair = std::make_pair(mostThreateningMob, ahead);
+    //return returnPair;
+    return mostThreateningMob;
 }
+
+ float distance(Entity* mob1, Vec2 ahead) {
+    return sqrt((mob1->getPosition().x - ahead.x) * (mob1->getPosition().x - ahead.x) +
+        (mob1->getPosition().y - ahead.y) * (mob1->getPosition().y - ahead.y));
+ }
 
 bool Mob::lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob){
     float mobRadius = ((float)sqrt(2) * mob->getStats().getSize()) / 2;
-    std::cout << std::string(" this mob name ") << this->getStats().getName() << std::endl;
-    std::cout << std::string(" other mob name ") << mob->getStats().getName() << std::endl;
-    std::cout << std::string(" mobRadius ") << mobRadius << std::endl;
-    std::cout << std::string(" dist ahead and mob ") << this->getPosition().dist(ahead) << std::endl;
+    if (this->getStats().getName() == mob->getStats().getName()) {
+        //std::cout << std::string(" this mob name ") << this->getStats().getName() << std::endl;
+        //std::cout << std::string(" other mob name ") << mob->getStats().getName() << std::endl;
+        //std::cout << std::string(" mobRadius ") << mobRadius << std::endl;
+        //std::cout << std::string(" dist ahead and mob ") << distance(mob, ahead) << std::endl;
+        //std::cout << std::string(" dist ahead2 and mob ") << distance(mob, ahead2) << std::endl;
+    }
 
-    return this->getPosition().dist(ahead) <= mobRadius || this->getPosition().dist(ahead2) <= mobRadius;
+    return distance(mob, ahead) <= mobRadius || distance(mob, ahead2) <= mobRadius;
 }
 
 const Vec2* Mob::pickWaypoint()
