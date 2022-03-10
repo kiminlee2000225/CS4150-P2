@@ -69,11 +69,11 @@ const float TICK_MAX = 0.2f;
 
 // Elixir
 const float STARTING_ELIXIR = 8.f;
-const float ELIXIR_PER_SECOND = .33333f;
+const float ELIXIR_PER_SECOND = .83333f;
 const float MAX_ELIXIR = 10.01f; // a little bit more than 10, to avoid float error
 
 // Increase/decrease damage globally
-const float DAMAGE_MULTIPLIER = 1.f;
+const float DAMAGE_MULTIPLIER = 4.f;
 
 
 

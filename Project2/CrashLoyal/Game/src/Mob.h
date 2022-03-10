@@ -38,6 +38,8 @@ protected:
     void processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec);
     Entity* getMostThreateningMob(Vec2 ahead, Vec2 ahead2);
     bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
+    Vec2 checkBuildingCollision(Vec2 nextPos);
+   // Vec2 checkMobCollision(Vec2 nextPos);
 
 private:
     const Vec2* m_pWaypoint;
