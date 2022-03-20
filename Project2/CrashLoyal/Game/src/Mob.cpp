@@ -115,6 +115,17 @@ void Mob::move(float deltaTSec)
         if (mostThreateningMob != nullptr) {
            // std::cout << std::string(" most threatening mob is NOT null ") << std::endl;
             // std::cout <<  std::string(" first ")  << std::endl;
+
+            // notes from Kevin Dill:
+            // calculate for vectors (velocity) with speed and direction, not just speed and its ending position. 
+            // my acc is being used as an offset. 
+            // might not be multiplying by elapsedTime which is deltaTSec
+            // newPos is the previous position + velocity * deltaTSec
+            // combine all steering forces to get the overall steering force. 
+            // m / s^2   * s .     acc * elapsedTime = velocity
+            // 
+            // use assert() for debugging.
+
             Vec2 avoidanceForce;
             avoidanceForce = ahead - mostThreateningMob->getPosition();
             float squareRadius = ((float)sqrt(2) * mostThreateningMob->getStats().getSize()) / 2;
@@ -125,33 +136,27 @@ void Mob::move(float deltaTSec)
             // add to previous velocity
             acc *= deltaTSec;
 
-            float vel = distRemaining / deltaTSec;
+            float speed = distRemaining / deltaTSec;
             // v = d / t   ?
-            float newVelocity = vel + acc;
+            float newSpeed = speed + acc; // <- kidnda sus, check units. 
 
             // 3) check and clamp so speed doesn't exceed max
             // v = d / t
             float maxVelocity = m_Stats.getSpeed();
-            if (newVelocity > maxVelocity) {
-                newVelocity = maxVelocity;
+            if (newSpeed > maxVelocity) {
+                newSpeed = maxVelocity;
             }
 
             // 4) multipy the clamped velocity by elapsed time (deltaTSec), 
             // add to previous position
-            float newMoveDist = newVelocity * deltaTSec;
+            float newMoveDist = newSpeed * deltaTSec;
 
             // 5) check for position is off map or buildings
             Vec2 nextPos;
             nextPos.x = m_Pos.x + newMoveDist;
             nextPos.y = m_Pos.y + newMoveDist;
             nextPos = checkBuildingCollision(nextPos);
-            // nextPos = checkMobCollision(nextPos);
-            //std::vector<Entity*> otherMobs = checkCollision();
-            //for (Entity* otherMob : otherMobs) {
-            //    if (otherMob) {
-            //        processCollision(otherMob, deltaTSec, moveVec);
-            //    }
-           // }
+            // mgiht need to cap this cuz it may be exceeding the top velocity. getSpeed(). 
 
             // 6) set position to be the calculated/new position
             //m_Pos.x += newMoveDist;
@@ -195,12 +200,12 @@ void Mob::move(float deltaTSec)
     // PROJECT 2: This is where your collision code will be called from
     // Mob* otherMob = checkCollision();
     // Might be better to do this before the position has been updated. Mgiht make it smoother. 
-    std::vector<Entity*> otherMobs = checkCollision();
-    for (Entity* otherMob : otherMobs) {
-        if (otherMob) {
-            processCollision(otherMob, deltaTSec, moveVec);
-        }
-    }
+    //std::vector<Entity*> otherMobs = checkCollision();
+    //for (Entity* otherMob : otherMobs) {
+    //    if (otherMob) {
+    //        processCollision(otherMob, deltaTSec, moveVec);
+    //    }
+    //}
 }
 
 Vec2 Mob::checkBuildingCollision(Vec2 nextPos) {
