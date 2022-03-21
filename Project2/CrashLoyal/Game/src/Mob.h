@@ -35,7 +35,7 @@ protected:
     void move(float deltaTSec);
     const Vec2* pickWaypoint();
     std::vector<Entity*> checkCollision();
-    void processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec);
+    // void processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec);
     Entity* getMostThreateningMob(Vec2 ahead, Vec2 ahead2);
     bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
     Vec2 checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel);
