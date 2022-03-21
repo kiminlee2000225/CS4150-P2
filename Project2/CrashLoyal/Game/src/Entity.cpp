@@ -35,6 +35,7 @@ Entity::Entity(const iEntityStats& stats, const Vec2& pos, bool isNorth)
     , m_pTarget(NULL)
     , m_bTargetLock(NULL)
     , m_TimeSinceAttack(0.f)
+    , m_Velocity(Vec2(0, 0))
 {
 }
 

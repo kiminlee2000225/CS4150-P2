@@ -47,6 +47,8 @@ public:
 
     iPlayer::EntityData getData() const { return iPlayer::EntityData(m_Stats, m_Health, m_Pos); }
 
+    virtual const Vec2& getVelocity() const { return m_Velocity; }
+
 protected:
     void pickTarget();
     bool targetInRange();
@@ -56,6 +58,8 @@ protected:
     bool m_bNorth;
     int m_Health;
     Vec2 m_Pos;
+    Vec2 m_Velocity;
+    // float m_maxAcceleration;
 
     // Our target will be the closest target (may change every tick) until
     //  we attack it.  Once we attack a target, we stay locked on it until

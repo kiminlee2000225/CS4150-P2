@@ -85,8 +85,12 @@ void Mob::move(float deltaTSec)
     // have a vector of distRemaining and moveVec
     // get the distance to other mobs
 
+    targetPos = destPos;
     // Actually do the moving
     Vec2 moveVec = destPos - m_Pos;
+    Vec2 normalizedVec = moveVec / moveVec.length();
+    Vec2 velocityVector = normalizedVec * m_Stats.getSpeed();
+
     float distRemaining = moveVec.normalize();
     float moveDist = m_Stats.getSpeed() * deltaTSec;
 
@@ -104,15 +108,24 @@ void Mob::move(float deltaTSec)
 
     if (moveDist <= distRemaining)
     {
+       // float offsetVector = velocityVector * deltaTSec; // <-- distance
+        //Vec2 nextPos;
+        //nextPos.x = m_Pos.x + offsetVector;
+        //nextPos.y = m_Pos.y + offsetVector;
+        //m_Pos = nextPos;
+
        // std::cout << std::string(" first ") << std::endl;
         const float MAX_SEE_AHEAD = 5;
         Vec2 ahead;
-        ahead.x = m_Pos.x + moveVec.normalize() *MAX_SEE_AHEAD;
-        ahead.y = m_Pos.y + moveVec.normalize() *MAX_SEE_AHEAD;
+        ahead = m_Pos + normalizedVec;
+        ahead *= MAX_SEE_AHEAD;
+        //ahead.x = m_Pos.x + normalizedVec *MAX_SEE_AHEAD;
+        //ahead.y = m_Pos.y + normalizedVec *MAX_SEE_AHEAD;
         Vec2 ahead2 = ahead * 0.5;
         Entity* mostThreateningMob = getMostThreateningMob(ahead, ahead2);
         // std::pair<Entity*, const Vec2> pair = getMostThreateningMob();
         if (mostThreateningMob != nullptr) {
+            std::cout << std::string(" most threatening mob is NOT null ") << std::endl;
            // std::cout << std::string(" most threatening mob is NOT null ") << std::endl;
             // std::cout <<  std::string(" first ")  << std::endl;
 
@@ -129,70 +142,76 @@ void Mob::move(float deltaTSec)
             Vec2 avoidanceForce;
             avoidanceForce = ahead - mostThreateningMob->getPosition();
             float squareRadius = ((float)sqrt(2) * mostThreateningMob->getStats().getSize()) / 2;
-            float force = avoidanceForce.normalize() * squareRadius;
-            float acc = force / m_Stats.getMass();
+            avoidanceForce = avoidanceForce / avoidanceForce.length();
+            Vec2 force = avoidanceForce * squareRadius;
+            Vec2 acc = force / m_Stats.getMass();
+           // float acc = force / m_Stats.getMass();
 
             // 2) multiply combined steering force (acceleration) by elapsed time (deltaTSec), 
             // add to previous velocity
-            acc *= deltaTSec;
+            Vec2 newVelocity = acc * deltaTSec; // <-- velocity
+            Vec2 nextNewVelocity = velocityVector + newVelocity;
 
-            float speed = distRemaining / deltaTSec;
-            // v = d / t   ?
-            float newSpeed = speed + acc; // <- kidnda sus, check units. 
-
-            // 3) check and clamp so speed doesn't exceed max
-            // v = d / t
-            float maxVelocity = m_Stats.getSpeed();
-            if (newSpeed > maxVelocity) {
-                newSpeed = maxVelocity;
+            if (nextNewVelocity.length() > m_Stats.getSpeed()) {
+                nextNewVelocity = nextNewVelocity / nextNewVelocity.length();
+                nextNewVelocity *= m_Stats.getSpeed();
             }
+            m_Velocity = nextNewVelocity;
 
-            // 4) multipy the clamped velocity by elapsed time (deltaTSec), 
-            // add to previous position
-            float newMoveDist = newSpeed * deltaTSec;
-
-            // 5) check for position is off map or buildings
-            Vec2 nextPos;
-            nextPos.x = m_Pos.x + newMoveDist;
-            nextPos.y = m_Pos.y + newMoveDist;
-            nextPos = checkBuildingCollision(nextPos);
-            // mgiht need to cap this cuz it may be exceeding the top velocity. getSpeed(). 
-
-            // 6) set position to be the calculated/new position
-            //m_Pos.x += newMoveDist;
-            //m_Pos.y += newMoveDist;
-            m_Pos = nextPos;
+            Vec2 newOffsetVector = nextNewVelocity * deltaTSec;
+            m_Pos += newOffsetVector;
+            //Vec2 nextPos;
+            //nextPos.x = m_Pos.x + newOffsetVector;
+            //nextPos.y = m_Pos.y + newOffsetVector;
+           // m_Pos = nextPos;
         }
         else {
-           //  std::cout << std::string(" most threatening mob is null ") << std::endl;
-            Vec2 nextPos = m_Pos + (moveVec * moveDist);
-            nextPos = checkBuildingCollision(nextPos);
-            // nextPos = checkMobCollision(nextPos);
-            m_Pos = nextPos;
-            // m_Pos += moveVec * moveDist;
+            // std::cout << std::string(" most threatening mob is null ") << std::endl;
+            // Vec2 nextPos = m_Pos + (moveVec * moveDist);
+            Vec2 velocity = velocityVector;
+            Vec2 velocityNormal;
+            Vec2 offset;
+           //  std::cout << std::string("a: ") << velocity.length() << std::endl;
+            if (velocity.length() > m_Stats.getSpeed()) {
+                velocity /= velocity.length();
+               velocity *= m_Stats.getSpeed();
+            }
+           Vec2 distance = velocity * deltaTSec;
+
+           Vec2 nextPos = m_Pos + distance;
+           // nextPos = checkBuildingCollision(nextPos, deltaTSec, velocity); // <-- comment this out 
+           //Vec2 buildingVelocity = checkBuildingCollision(nextPos, deltaTSec);
+           //velocity = velocityVector + buildingVelocity;
+           //if (velocity.length() > m_Stats.getSpeed()) {
+           //    velocity /= velocity.length();
+           //    velocity *= m_Stats.getSpeed();
+           //}
+           //distance = velocity * deltaTSec;
+           //nextPos = m_Pos + distance;
+           m_Pos = nextPos;
         }
     }
     else
     {
        //  m_Pos += moveVec * distRemaining;
-        Vec2 nextPos = m_Pos + (moveVec * distRemaining);
-        nextPos = checkBuildingCollision(nextPos);
-        // nextPos = checkMobCollision(nextPos);
-        m_Pos = nextPos;
+        //Vec2 nextPos = m_Pos + (moveVec * distRemaining);
+        //nextPos = checkBuildingCollision(nextPos, deltaTSec);
+        //// nextPos = checkMobCollision(nextPos);
+        //m_Pos = nextPos;
        // std::cout << std::string(" second ") << std::endl;
 
         // if the destination was a waypoint, find the next one and continue movement
         if (m_pWaypoint)
         {
             m_pWaypoint = pickWaypoint();
-            destPos = m_pWaypoint ? *m_pWaypoint : m_Pos;
-            moveVec = destPos - m_Pos;
-            moveVec.normalize();
+            //destPos = m_pWaypoint ? *m_pWaypoint : m_Pos;
+            //moveVec = destPos - m_Pos;
+            //moveVec.normalize();
 
-            Vec2 nextPos = m_Pos + (moveVec * distRemaining);
-            nextPos = checkBuildingCollision(nextPos);
-            // nextPos = checkMobCollision(nextPos);
-            m_Pos = nextPos;
+            //Vec2 nextPos = m_Pos + (moveVec * distRemaining);
+            //nextPos = checkBuildingCollision(nextPos, deltaTSec);
+            //// nextPos = checkMobCollision(nextPos);
+            //m_Pos = nextPos;
             // m_Pos += moveVec * distRemaining;
         }
     }
@@ -200,20 +219,241 @@ void Mob::move(float deltaTSec)
     // PROJECT 2: This is where your collision code will be called from
     // Mob* otherMob = checkCollision();
     // Might be better to do this before the position has been updated. Mgiht make it smoother. 
-    //std::vector<Entity*> otherMobs = checkCollision();
-    //for (Entity* otherMob : otherMobs) {
-    //    if (otherMob) {
-    //        processCollision(otherMob, deltaTSec, moveVec);
-    //    }
-    //}
+    std::vector<Entity*> otherMobs = checkCollision();
+    for (Entity* otherMob : otherMobs) {
+        if (otherMob) {
+            processCollision(otherMob, deltaTSec);
+            // processCollision(otherMob, deltaTSec, moveVec);
+        }
+    }
+    checkBuildings(deltaTSec, true);
+    checkBuildings(deltaTSec, false);
+    checkRiver(deltaTSec);
+    checkMapEdges(deltaTSec);
+    // m_Pos = nextPos;
 }
 
-Vec2 Mob::checkBuildingCollision(Vec2 nextPos) {
+
+void Mob::checkMapEdges(double elapsedTime) {
+
+}
+
+void Mob::checkRiver(double elapsedTime) {
+    float const shiftSize = 0.25f;
+    std::shared_ptr<Vec2>river;
+    if (this->getPosition().x >= RIVER_LEFT_X
+        && this->getPosition().x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
+        && this->getPosition().y >= RIVER_TOP_Y
+        && this->getPosition().y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
+        river = std::make_shared<Vec2>(Vec2(RIVER_LEFT_X, RIVER_TOP_Y));
+    }
+    else if (this->getPosition().x >= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
+        && this->getPosition().x <= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (SCREEN_WIDTH_PIXELS - RIGHT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
+        && this->getPosition().y >= RIVER_TOP_Y
+        && this->getPosition().y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
+        river = std::make_shared<Vec2>(Vec2((RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
+    }
+    else if (this->getPosition().x >= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
+        && this->getPosition().x <= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH)
+        && this->getPosition().y >= RIVER_TOP_Y
+        && this->getPosition().y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
+        river = std::make_shared<Vec2>(Vec2((LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
+    }
+    else {
+        return;
+    }
+    Vec2 p = Vec2(this->m_Pos.x - targetPos.x, this->m_Pos.y - targetPos.y);
+    p.normalize();
+    if (river->x == (BRIDGE_WIDTH + LEFT_BRIDGE_CENTER_X / 2.0) - 0.5) {
+        if (this->m_Pos.x > river->x + ((RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH) / 2)) {
+            p.x += shiftSize;
+        }
+        else {
+            p.x -= shiftSize;
+        }
+    }
+    else if (river->x == RIVER_LEFT_X) { p.x += 0.5f; }
+    else { p.x -= 0.5f; }
+    p *= (float)this->getStats().getSpeed();
+    p *= (float)elapsedTime;
+    m_Pos += p;
+}
+
+void Mob::processCollision(Entity* otherMob, double elapsedTime) {
+    float const shiftVal = 0.1f;
+    if (this->getStats().getMass() > otherMob->getStats().getMass()) {
+        return;
+    }
+    else {
+        Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x, 
+            this->m_Pos.y - otherMob->getPosition().y);
+        p.normalize();
+        float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
+        Vec2 otherMobPos = otherMob->getPosition();
+        float thisSize = this->getStats().getSize();
+        float halfSize = (float)thisSize / 2;
+
+        float r1RightEdge = otherMobPos.x + otherMobHalfSize;
+        float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
+        float r1TopEdge = otherMobPos.y + otherMobHalfSize;
+        float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
+
+        float r2RightEdge = this->getPosition().x + halfSize;
+        float r2LeftEdge = this->getPosition().x - halfSize;
+        float r2TopEdge = this->getPosition().y + halfSize;
+        float r2BottomEdge = this->getPosition().y - halfSize;
+
+        if (r1RightEdge >= r2LeftEdge &&
+            r1LeftEdge <= r2RightEdge &&
+            r1TopEdge >= r2BottomEdge &&
+            r1BottomEdge <= r2TopEdge) {
+            // std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
+            float shiftSize;
+            if (r1RightEdge >= r2LeftEdge) {
+                shiftSize = r1RightEdge - r2LeftEdge;
+                p.x += shiftSize;
+            }
+            else if (r1LeftEdge <= r2RightEdge) {
+                shiftSize = r2RightEdge - r1LeftEdge;
+                p.x -= shiftSize;
+            }
+            else if (r1TopEdge >= r2BottomEdge) {
+                shiftSize = r1TopEdge - r2BottomEdge;
+                p.y += shiftSize;
+            }
+            else if (r1BottomEdge <= r2TopEdge) {
+                shiftSize = r2TopEdge - r1BottomEdge;
+                p.y -= shiftSize;
+            }
+        }
+        //if (std::abs(p.x) > std::abs(p.y)) {
+        //    if (p.x <= 0.0f && p.y <= 0.0f) {
+        //        p.x += shiftVal;
+        //        p.y -= shiftVal;
+        //    }
+        //    else if (p.x > 0.0f && p.y <= 0.0f) {
+        //        p.x -= shiftVal;
+        //        p.y -= shiftVal;
+        //    }
+        //    else if (p.x > 0.0f && p.y > 0.0f) {
+        //        p.x -= shiftVal;
+        //        p.y += shiftVal;
+        //    }
+        //    else if (p.x <= 0.0f && p.y > 0.0f) {
+        //        p.x += shiftVal;
+        //        p.y += shiftVal;
+        //    }
+        //}
+        //else {
+        //    if (p.x <= 0.0f && p.y <= 0.0f) {
+        //        p.x -= shiftVal;
+        //        p.y += shiftVal;
+        //    }
+        //    else if (p.x > 0.0f && p.y <= 0.0f) {
+        //        p.x += shiftVal;
+        //        p.y += shiftVal;
+        //    }
+        //    else if (p.x > 0.0f && p.y > 0.0f) {
+        //        p.x += shiftVal;
+        //        p.y -= shiftVal;
+        //    }
+        //    else if (p.x <= 0.0f && p.y > 0.0f) {
+        //        p.x -= shiftVal;
+        //        p.y -= shiftVal;
+        //    }
+        //}
+        p *= (float)this->getStats().getSpeed();
+        p *= (float)elapsedTime;
+        // updating position
+        m_Pos += p;
+    }
+}
+
+void Mob::checkBuildings(double elapsedTime, bool isNorth) {
+    float const shiftSizeNew = 0.10f;
+    const Player& player = Game::get().getPlayer(isNorth);
+    Vec2 velocityVec;
+    for (Entity* building : player.getBuildings())
+    {
+        float buildingHalfSize = building->getStats().getSize() / 2;
+        Vec2 buildingPos = building->getPosition();
+        float r1RightEdge = buildingPos.x + buildingHalfSize;
+        float r1LeftEdge = buildingPos.x - buildingHalfSize;
+        float r1TopEdge = buildingPos.y + buildingHalfSize;
+        float r1BottomEdge = buildingPos.y - buildingHalfSize;
+
+        float thisSize = this->getStats().getSize();
+        float halfSize = (float)thisSize / 2;
+        float r2RightEdge = m_Pos.x + halfSize;
+        float r2LeftEdge = m_Pos.x - halfSize;
+        float r2TopEdge = m_Pos.y + halfSize;
+        float r2BottomEdge = m_Pos.y - halfSize;
+
+        if (r1RightEdge >= r2LeftEdge &&
+            r1LeftEdge <= r2RightEdge &&
+            r1TopEdge >= r2BottomEdge &&
+            r1BottomEdge <= r2TopEdge) {
+            std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
+            float shiftSize;
+            Vec2 p = Vec2(this->getPosition().x - building->getPosition().x, 
+                this->getPosition().y - building->getPosition().y);
+            p.normalize();
+            if (r1RightEdge >= r2LeftEdge) {
+                shiftSize = r1RightEdge - r2LeftEdge;
+                p.x += shiftSize;
+            }
+            else if (r1LeftEdge <= r2RightEdge) {
+                shiftSize = r2RightEdge - r1LeftEdge;
+                p.x -= shiftSize;
+            }
+            else if (r1TopEdge >= r2BottomEdge) {
+                shiftSize = r1TopEdge - r2BottomEdge;
+                p.y += shiftSize;
+            }
+            else if (r1BottomEdge <= r2TopEdge) {
+                shiftSize = r2TopEdge - r1BottomEdge;
+                p.y -= shiftSize;
+            }
+
+            p *= (float)this->getStats().getSpeed();
+            p *= (float)elapsedTime;
+            m_Pos += p;
+            //float sizeAvg = (building->getStats().getSize() + this->getStats().getSize()) / 2;
+            //bool x_cond = sizeAvg >= std::abs(this->getPosition().x - building->getPosition().x + shiftSizeNew);
+            //bool y_cond = sizeAvg >= std::abs(this->getPosition().y - building->getPosition().y + shiftSizeNew);
+            //if (x_cond && y_cond) {
+            //    Vec2 p = Vec2(this->getPosition().x - building->getPosition().x, 
+            //        this->getPosition().y - building->getPosition().y);
+            //    p.normalize();
+            //    if (p.x <= 0.0f && p.y <= 0.0f) {
+            //        p.x -= shiftSizeNew;
+            //        p.y += shiftSizeNew;
+            //    }
+            //    else if (p.x > 0.0f && p.y <= 0.0f) {
+            //        p.x += shiftSizeNew;
+            //        p.y += shiftSizeNew;
+            //    }
+            //    else if (p.x > 0.0f && p.y > 0.0f) {
+            //        p.x += shiftSizeNew;
+            //        p.y -= shiftSizeNew;
+            //    }
+            //    else if (p.x <= 0.0f && p.y > 0.0f) {
+            //        p.x -= shiftSizeNew;
+            //        p.y -= shiftSizeNew;
+            //    }
+            //    p *= (float)this->getStats().getSpeed();
+            //    p *= (float)elapsedTime;
+            //    m_Pos += p;
+            //
+        }
+    }
+}
+
+Vec2 Mob::checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel) {
     float thisSize = this->getStats().getSize();
     float halfSize = (float) thisSize / 2;
-    //Vec2 nextPos;
-    //nextPos.x = m_Pos.x + newMoveDist;
-    //nextPos.y = m_Pos.y + newMoveDist;
+    Vec2 velocityVec = Vec2(0,0);
+    float maxDist = m_Stats.getSpeed() * deltaTSec;
 
     const Player& northPlayer = Game::get().getPlayer(true);
     for (Entity* building : northPlayer.getBuildings())
@@ -239,19 +479,27 @@ Vec2 Mob::checkBuildingCollision(Vec2 nextPos) {
             float shiftSize;
             if (r1RightEdge >= r2LeftEdge) {
                 shiftSize = r1RightEdge - r2LeftEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
                 nextPos.x += shiftSize;
+                velocityVec.x += shiftSize;
             }
             else if (r1LeftEdge <= r2RightEdge) {
                 shiftSize = r2RightEdge - r1LeftEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
                 nextPos.x -= shiftSize;
+                velocityVec.x -= shiftSize;
             }
             else if (r1TopEdge >= r2BottomEdge) {
                 shiftSize = r1TopEdge - r2BottomEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
                 nextPos.y += shiftSize;
+                velocityVec.y += shiftSize;
             }
             else if (r1BottomEdge <= r2TopEdge) {
                 shiftSize = r2TopEdge - r1BottomEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
                 nextPos.y -= shiftSize;
+                velocityVec.y -= shiftSize;
             }
             // return nextPos;
         }
@@ -281,24 +529,66 @@ Vec2 Mob::checkBuildingCollision(Vec2 nextPos) {
             float shiftSize;
             if (r1RightEdge >= r2LeftEdge) {
                 shiftSize = r1RightEdge - r2LeftEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
                 nextPos.x += shiftSize;
+                velocityVec.x += shiftSize;
             }
             else if (r1LeftEdge <= r2RightEdge) {
                 shiftSize = r2RightEdge - r1LeftEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
+                //float vel = shiftSize / deltaTSec;
+                //if (vel > m_Stats.getSpeed()) {
+                //    vel /= getStats().getSize(); // normalizing
+                //    vel *= m_Stats.getSpeed();
+                //}
                 nextPos.x -= shiftSize;
+                velocityVec.x -= shiftSize;
             }
             else if (r1TopEdge >= r2BottomEdge) {
                 shiftSize = r1TopEdge - r2BottomEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
+                //float vel = shiftSize / deltaTSec;
+                //if (vel > m_Stats.getSpeed()) {
+                //    vel /= getStats().getSize(); // normalizing
+                //    vel *= m_Stats.getSpeed();
+                //}
                 nextPos.y += shiftSize;
+                velocityVec.y += shiftSize;
             }
             else if (r1BottomEdge <= r2TopEdge) {
                 shiftSize = r2TopEdge - r1BottomEdge;
+                 shiftSize = std::min(maxDist, shiftSize);
+                //float vel = shiftSize / deltaTSec;
+                //if (vel > m_Stats.getSpeed()) {
+                //    vel /= getStats().getSize(); // normalizing
+                //    vel *= m_Stats.getSpeed();
+                //}
                 nextPos.y -= shiftSize;
+                velocityVec.y -= shiftSize;
             }
           //   return nextPos;
         }
     }
-    return nextPos;
+   // return velocityVec;
+    //Vec2 resultVel = vel + velocityVec;
+    ////if (resultVel.length() > m_Stats.getSpeed()) {
+    ////    resultVel /= resultVel.length();
+    ////    resultVel *= m_Stats.getSpeed();
+    ////}
+    //resultVel *= deltaTSec;
+    //Vec2 resultPos = m_Pos + resultVel;
+    //return resultPos;
+
+    //Vec2 newDistance = velocityVec * deltaTSec;
+    //if (newDistance.length() != 0) {
+    //    return nextPos + newDistance;
+    //}
+     return velocityVec;
+
+    // notes. 
+    // I'm moving more than I am allowed to, so it looks like the mob is moving quick. It is also moving inside the buildling
+    // cuz of that. 
+    //To avoid this, somehow try to make sure the cap/max is effectively working.
 }
 
 //std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
