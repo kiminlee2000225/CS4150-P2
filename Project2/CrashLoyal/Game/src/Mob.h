@@ -39,12 +39,11 @@ protected:
     Entity* getMostThreateningMob(Vec2 ahead, Vec2 ahead2);
     bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
     Vec2 checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel);
-    void checkBuildings(double elapsedTime, bool isNorth);
-    void processCollision(Entity* otherMob, double elapsedTime);
-    void checkRiver(double elapsedTime);
-    void checkMapEdges(double elapsedTime);
+    void checkBuildings(float elapsedTime, bool isNorth);
+    void processCollision(Entity* otherMob, float elapsedTime);
+    void checkRiver(float elapsedTime);
+    void checkMapEdges(float elapsedTime);
    // Vec2 checkMobCollision(Ve)2 nextPos);
-
 private:
     const Vec2* m_pWaypoint;
     Vec2 targetPos;
