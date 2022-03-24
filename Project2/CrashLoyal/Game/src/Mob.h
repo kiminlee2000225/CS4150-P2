@@ -47,4 +47,6 @@ protected:
 private:
     const Vec2* m_pWaypoint;
     Vec2 targetPos;
+    bool xStop;
+    bool yStop;
 };

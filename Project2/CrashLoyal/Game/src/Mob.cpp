@@ -165,6 +165,12 @@ void Mob::move(float deltaTSec)
 			// std::cout << std::string(" most threatening mob is null ") << std::endl;
 			// Vec2 nextPos = m_Pos + (moveVec * moveDist);
 			Vec2 velocity = velocityVector;
+			if (xStop) {
+				velocity.x = 0;
+			}
+			if (yStop) {
+				velocity.y = 0;
+			}
 			Vec2 velocityNormal;
 			Vec2 offset;
 			//  std::cout << std::string("a: ") << velocity.length() << std::endl;
@@ -229,40 +235,60 @@ void Mob::move(float deltaTSec)
 
 
 void Mob::checkMapEdges(float elapsedTime) {
-	float shiftSize = 0;
+	float shiftSize = this->getStats().getSize();
+	float mobSize = this->getStats().getSize();
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
 	Vec2 p = Vec2(this->m_Pos.x - targetPos.x, this->m_Pos.y - targetPos.y);
 	p.normalize();
 	bool adjusted = false;
-	if (this->getPosition().x > SCREEN_WIDTH_PIXELS) {
-		shiftSize = this->getPosition().x - SCREEN_WIDTH_PIXELS;
-		shiftSize = std::min(maxDist, shiftSize);
+	if (this->getPosition().x + (mobSize / 2) > GAME_GRID_WIDTH) {
+		std::cout << std::string("going off screen to right") << std::endl;
+		shiftSize = (this->getPosition().x + (mobSize / 2)) - GAME_GRID_WIDTH;
+		// shiftSize = std::min(maxDist, shiftSize);
 		p.x -= shiftSize;
 		adjusted = true;
+		xStop = true;
 	}
-	if (this->getPosition().x < 0.0f) {
-		shiftSize = std::abs(this->getPosition().x);
-		shiftSize = std::min(maxDist, shiftSize);
+	else {
+		xStop = false;
+	}
+	if (this->getPosition().x - (mobSize / 2) < 0.0f) {
+		std::cout << std::string("going off screen to left") << std::endl;
+		shiftSize = std::abs(this->getPosition().x -(mobSize / 2));
+		// shiftSize = std::min(maxDist, shiftSize);
 		p.x += shiftSize;
 		adjusted = true;
+		xStop = true;
 	}
-	if (this->getPosition().y > SCREEN_HEIGHT_PIXELS) {
-		shiftSize = this->getPosition().y - SCREEN_HEIGHT_PIXELS;
-		shiftSize = std::min(maxDist, shiftSize);
-		p.y -= shiftSize;
+	else {
+		xStop = false;
+	}
+	if (this->getPosition().y + (mobSize / 2) > GAME_GRID_HEIGHT) {
+		shiftSize = (this->getPosition().y + (mobSize / 2)) - GAME_GRID_HEIGHT;
+	// 	shiftSize = std::min(maxDist, shiftSize);
+		p.y -= shiftSize ;
 		adjusted = true;
+		yStop = true;
 	}
-	if (this->getPosition().y < 0) {
-		shiftSize = std::abs(this->getPosition().y);
-		shiftSize = std::min(maxDist, shiftSize);
+	else {
+		yStop = false;
+	}
+	if (this->getPosition().y - (mobSize / 2) < 0) {
+		shiftSize = std::abs(this->getPosition().y - (mobSize / 2));
+		// shiftSize = std::min(maxDist, shiftSize);
 		p.y += shiftSize;
 		adjusted = true;
+		yStop = true;
+	}
+	else {
+		yStop = false;
 	}
 	if (adjusted) {
 		p *= (float)this->getStats().getSpeed();
 		p *= (float)elapsedTime;
 		m_Pos += p;
 	}
+
 }
 
 void Mob::checkRiver(float elapsedTime) {
@@ -319,7 +345,7 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 	float shiftVal = 0.1f;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
 	if (this->getStats().getMass() > otherMob->getStats().getMass()) {
-		std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
+		// std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
 		Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
 			this->m_Pos.y - otherMob->getPosition().y);
 		p.normalize();
@@ -369,7 +395,7 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 		otherMob->m_Pos -= p;
 	}
 	else {
-		std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
+		// std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
 		Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
 			this->m_Pos.y - otherMob->getPosition().y);
 		p.normalize();
