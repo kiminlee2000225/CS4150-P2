@@ -49,6 +49,8 @@ public:
 
     virtual const Vec2& getVelocity() const { return m_Velocity; }
 
+    Vec2 m_Pos;
+
 protected:
     void pickTarget();
     bool targetInRange();
@@ -57,7 +59,6 @@ protected:
     const iEntityStats& m_Stats;
     bool m_bNorth;
     int m_Health;
-    Vec2 m_Pos;
     Vec2 m_Velocity;
     // float m_maxAcceleration;
 

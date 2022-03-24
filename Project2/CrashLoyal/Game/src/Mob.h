@@ -38,7 +38,7 @@ protected:
     // void processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec);
     Entity* getMostThreateningMob(Vec2 ahead, Vec2 ahead2);
     bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
-    Vec2 checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel);
+    // Vec2 checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel);
     void checkBuildings(float elapsedTime, bool isNorth);
     void processCollision(Entity* otherMob, float elapsedTime);
     void checkRiver(float elapsedTime);

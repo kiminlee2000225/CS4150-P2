@@ -319,9 +319,7 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 	float shiftVal = 0.1f;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
 	if (this->getStats().getMass() > otherMob->getStats().getMass()) {
-		return;
-	}
-	else {
+		std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
 		Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
 			this->m_Pos.y - otherMob->getPosition().y);
 		p.normalize();
@@ -344,7 +342,56 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 			r1LeftEdge <= r2RightEdge &&
 			r1TopEdge >= r2BottomEdge &&
 			r1BottomEdge <= r2TopEdge) {
-			// std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
+			float shiftSize;
+			if (r1RightEdge >= r2LeftEdge) {
+				shiftSize = r1RightEdge - r2LeftEdge;
+				shiftSize = std::min(maxDist, shiftSize);
+				p.x += shiftSize;
+			}
+			else if (r1LeftEdge <= r2RightEdge) {
+				shiftSize = r2RightEdge - r1LeftEdge;
+				shiftSize = std::min(maxDist, shiftSize);
+				p.x -= shiftSize;
+			}
+			else if (r1TopEdge >= r2BottomEdge) {
+				shiftSize = r1TopEdge - r2BottomEdge;
+				shiftSize = std::min(maxDist, shiftSize);
+				p.y += shiftSize;
+			}
+			else if (r1BottomEdge <= r2TopEdge) {
+				shiftSize = r2TopEdge - r1BottomEdge;
+				shiftSize = std::min(maxDist, shiftSize);
+				p.y -= shiftSize;
+			}
+		}
+		p *= (float)otherMob->getStats().getSpeed();
+		p *= (float)elapsedTime;
+		otherMob->m_Pos -= p;
+	}
+	else {
+		std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
+		Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
+			this->m_Pos.y - otherMob->getPosition().y);
+		p.normalize();
+		float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
+		Vec2 otherMobPos = otherMob->getPosition();
+		float thisSize = this->getStats().getSize();
+		float halfSize = (float)thisSize / 2;
+
+		float r1RightEdge = otherMobPos.x + otherMobHalfSize;
+		float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
+		float r1TopEdge = otherMobPos.y + otherMobHalfSize;
+		float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
+
+		float r2RightEdge = this->getPosition().x + halfSize;
+		float r2LeftEdge = this->getPosition().x - halfSize;
+		float r2TopEdge = this->getPosition().y + halfSize;
+		float r2BottomEdge = this->getPosition().y - halfSize;
+
+		if (r1RightEdge >= r2LeftEdge &&
+			r1LeftEdge <= r2RightEdge &&
+			r1TopEdge >= r2BottomEdge &&
+			r1BottomEdge <= r2TopEdge) {
 			float shiftSize;
 			if (r1RightEdge >= r2LeftEdge) {
 				shiftSize = r1RightEdge - r2LeftEdge;
@@ -431,134 +478,6 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 	}
 }
 
-Vec2 Mob::checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel) {
-	float thisSize = this->getStats().getSize();
-	float halfSize = (float)thisSize / 2;
-	Vec2 velocityVec = Vec2(0, 0);
-	float maxDist = m_Stats.getSpeed() * (float)deltaTSec;
-
-	const Player& northPlayer = Game::get().getPlayer(true);
-	for (Entity* building : northPlayer.getBuildings())
-	{
-		float buildingHalfSize = building->getStats().getSize() / 2;
-		Vec2 buildingPos = building->getPosition();
-
-		float r1RightEdge = buildingPos.x + buildingHalfSize;
-		float r1LeftEdge = buildingPos.x - buildingHalfSize;
-		float r1TopEdge = buildingPos.y + buildingHalfSize;
-		float r1BottomEdge = buildingPos.y - buildingHalfSize;
-
-		float r2RightEdge = nextPos.x + halfSize;
-		float r2LeftEdge = nextPos.x - halfSize;
-		float r2TopEdge = nextPos.y + halfSize;
-		float r2BottomEdge = nextPos.y - halfSize;
-
-		if (r1RightEdge >= r2LeftEdge &&
-			r1LeftEdge <= r2RightEdge &&
-			r1TopEdge >= r2BottomEdge &&
-			r1BottomEdge <= r2TopEdge) {
-			std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
-			float shiftSize;
-			if (r1RightEdge >= r2LeftEdge) {
-				shiftSize = r1RightEdge - r2LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.x += shiftSize;
-				velocityVec.x += shiftSize;
-			}
-			else if (r1LeftEdge <= r2RightEdge) {
-				shiftSize = r2RightEdge - r1LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.x -= shiftSize;
-				velocityVec.x -= shiftSize;
-			}
-			else if (r1TopEdge >= r2BottomEdge) {
-				shiftSize = r1TopEdge - r2BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.y += shiftSize;
-				velocityVec.y += shiftSize;
-			}
-			else if (r1BottomEdge <= r2TopEdge) {
-				shiftSize = r2TopEdge - r1BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.y -= shiftSize;
-				velocityVec.y -= shiftSize;
-			}
-			// return nextPos;
-		}
-	}
-
-	const Player& southPlayer = Game::get().getPlayer(false);
-	for (Entity* building : southPlayer.getBuildings())
-	{
-		float buildingHalfSize = building->getStats().getSize() / 2;
-		Vec2 buildingPos = building->getPosition();
-
-		float r1RightEdge = buildingPos.x + buildingHalfSize;
-		float r1LeftEdge = buildingPos.x - buildingHalfSize;
-		float r1TopEdge = buildingPos.y + buildingHalfSize;
-		float r1BottomEdge = buildingPos.y - buildingHalfSize;
-
-		float r2RightEdge = nextPos.x + halfSize;
-		float r2LeftEdge = nextPos.x - halfSize;
-		float r2TopEdge = nextPos.y + halfSize;
-		float r2BottomEdge = nextPos.y - halfSize;
-
-		if (r1RightEdge >= r2LeftEdge &&
-			r1LeftEdge <= r2RightEdge &&
-			r1TopEdge >= r2BottomEdge &&
-			r1BottomEdge <= r2TopEdge) {
-			std::cout << this->getStats().getName() << std::string(" gon collide south") << std::endl;
-			float shiftSize;
-			if (r1RightEdge >= r2LeftEdge) {
-				shiftSize = r1RightEdge - r2LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.x += shiftSize;
-				velocityVec.x += shiftSize;
-			}
-			else if (r1LeftEdge <= r2RightEdge) {
-				shiftSize = r2RightEdge - r1LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.x -= shiftSize;
-				velocityVec.x -= shiftSize;
-			}
-			else if (r1TopEdge >= r2BottomEdge) {
-				shiftSize = r1TopEdge - r2BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.y += shiftSize;
-				velocityVec.y += shiftSize;
-			}
-			else if (r1BottomEdge <= r2TopEdge) {
-				shiftSize = r2TopEdge - r1BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				nextPos.y -= shiftSize;
-				velocityVec.y -= shiftSize;
-			}
-			//   return nextPos;
-		}
-	}
-	// return velocityVec;
-	 //Vec2 resultVel = vel + velocityVec;
-	 ////if (resultVel.length() > m_Stats.getSpeed()) {
-	 ////    resultVel /= resultVel.length();
-	 ////    resultVel *= m_Stats.getSpeed();
-	 ////}
-	 //resultVel *= deltaTSec;
-	 //Vec2 resultPos = m_Pos + resultVel;
-	 //return resultPos;
-
-	 //Vec2 newDistance = velocityVec * deltaTSec;
-	 //if (newDistance.length() != 0) {
-	 //    return nextPos + newDistance;
-	 //}
-	return velocityVec;
-
-	// notes. 
-	// I'm moving more than I am allowed to, so it looks like the mob is moving quick. It is also moving inside the buildling
-	// cuz of that. 
-	//To avoid this, somehow try to make sure the cap/max is effectively working.
-}
-
-//std::pair<Entity*, const Vec2> Mob::getMostThreateningMob() {
 Entity* Mob::getMostThreateningMob(Vec2 ahead, Vec2 ahead2) {
 	Entity* mostThreateningMob = nullptr;
 	// float minDist = FLT_MAX;
@@ -663,7 +582,6 @@ std::vector<Entity*> Mob::checkCollision()
 		{
 			continue;
 		}
-
 		// PROJECT 2: YOUR CODE CHECKING FOR A COLLISION GOES HERE
 		float mobHalfSize = (float)pOtherMob->getStats().getSize() / 2;
 		Vec2 mobPos = pOtherMob->getPosition();
@@ -682,8 +600,9 @@ std::vector<Entity*> Mob::checkCollision()
 			r1LeftEdge <= r2RightEdge &&
 			r1TopEdge >= r2BottomEdge &&
 			r1BottomEdge <= r2TopEdge) {
+			// std::cout << std::string(" collision with red ") << std::endl;
+
 			collidingMobs.push_back(pOtherMob);
-			//std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
 		}
 	}
 
@@ -713,8 +632,8 @@ std::vector<Entity*> Mob::checkCollision()
 			r1LeftEdge <= r2RightEdge &&
 			r1TopEdge >= r2BottomEdge &&
 			r1BottomEdge <= r2TopEdge) {
+			// std::cout << std::string(" collision with blue ") << std::endl;
 			collidingMobs.push_back(pOtherMob);
-			//std::cout << this->getStats().getName() + std::string(" and ") + pOtherMob->getStats().getName() << std::endl;
 		}
 	}
 
