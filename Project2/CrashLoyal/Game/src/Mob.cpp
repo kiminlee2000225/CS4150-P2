@@ -242,6 +242,7 @@ bool Mob::checkMapEdgesCollides(Vec2 newPos) {
 bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 	std::cout << std::string(" method called at least ") << std::endl;
 	std::shared_ptr<Vec2>river;
+	// Make a Vec2 for the river edges depending on what edges the collision is occuring. 
 	if (newPos.x >= RIVER_LEFT_X
 		&& newPos.x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
 		&& newPos.y >= RIVER_TOP_Y
@@ -353,6 +354,7 @@ void Mob::checkRiver(float elapsedTime) {
 	float shiftSize = 0.5f;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
 	std::shared_ptr<Vec2>river;
+	// Make a Vec2 for the river edges depending on what edges the collision is occuring. 
 	if (this->getPosition().x >= RIVER_LEFT_X
 		&& this->getPosition().x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
 		&& this->getPosition().y >= RIVER_TOP_Y
@@ -424,6 +426,8 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 	float r2TopEdge = this->getPosition().y + halfSize;
 	float r2BottomEdge = this->getPosition().y - halfSize;
 
+	// Determine if there is a collision, then calculate how much 
+	// to shift and make adjustments by negating the edges. 
 	if (r1RightEdge >= r2LeftEdge &&
 		r1LeftEdge <= r2RightEdge &&
 		r1TopEdge >= r2BottomEdge &&
@@ -450,6 +454,7 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 			p.y -= shiftSize;
 		}
 	}
+
 	if (this->getStats().getMass() > otherMob->getStats().getMass()) {
 		pushedBack = true;
 	}
@@ -558,11 +563,12 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 		float r2TopEdge = m_Pos.y + halfSize;
 		float r2BottomEdge = m_Pos.y - halfSize;
 
+		// Determine if there is a collision, then calculate how much 
+		// to shift and make adjustments by negating the edges. 
 		if (r1RightEdge >= r2LeftEdge &&
 			r1LeftEdge <= r2RightEdge &&
 			r1TopEdge >= r2BottomEdge &&
 			r1BottomEdge <= r2TopEdge) {
-			// std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
 			float shiftSize;
 			Vec2 p = Vec2(this->getPosition().x - building->getPosition().x,
 				this->getPosition().y - building->getPosition().y);
@@ -571,28 +577,24 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 				shiftSize = r1RightEdge - r2LeftEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.x += shiftSize;
-				// xStop = true;
 				collides = true;
 			}
 			else if (r1LeftEdge <= r2RightEdge) {
 				shiftSize = r2RightEdge - r1LeftEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.x -= shiftSize;
-				// xStop = true;
 				collides = true;
 			}
 			else if (r1TopEdge >= r2BottomEdge) {
 				shiftSize = r1TopEdge - r2BottomEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.y += shiftSize;
-				// yStop = true;
 				collides = true;
 			}
 			else if (r1BottomEdge <= r2TopEdge) {
 				shiftSize = r2TopEdge - r1BottomEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.y -= shiftSize;
-				// yStop = true;
 				collides = true;
 			}
 
