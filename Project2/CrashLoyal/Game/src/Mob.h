@@ -43,6 +43,7 @@ protected:
     bool checkMapEdges(float elapsedTime);
     bool checkMapEdgesCollides(Vec2 newPos);
     bool checkRiverEdgesCollides(Vec2 newPos);
+    bool checkBuildingsCollides(Vec2 newPos, bool isNorth);
 private:
     const Vec2* m_pWaypoint;
     Vec2 targetPos;

@@ -43,14 +43,14 @@ void Controller_AI_KevinDill::tick(float deltaTSec)
         Vec2 archerPos_Game = ksArcherPos.Player2Game(isNorth);
 
         // Create two archers and a giant
-        m_pPlayer->placeMob(iEntityStats::Giant, giantPos_Game);
+        // m_pPlayer->placeMob(iEntityStats::Giant, giantPos_Game);
       //  m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game);
-        m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(3, 3));
+        //m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(3, 3));
         m_pPlayer->placeMob(iEntityStats::Swordsman, archerPos_Game + Vec2(1, 1));
         m_pPlayer->placeMob(iEntityStats::Swordsman, archerPos_Game + Vec2(2, 2));
-       // m_pPlayer->placeMob(iEntityStats::Giant, archerPos_Game - Vec2(0, 10));
+        m_pPlayer->placeMob(iEntityStats::Giant, archerPos_Game - Vec2(0, 10));
         //m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(2, 2));
-        m_pPlayer->placeMob(iEntityStats::Giant, archerPos_Game - Vec2(1, 10));
+        // m_pPlayer->placeMob(iEntityStats::Giant, giantPos_Game - Vec2(0, 5));
         // m_pPlayer->placeMob(iEntityStats::Archer, archerPos_Game + Vec2(1, 2));
 
         //bool isSouth = m_pPlayer->();

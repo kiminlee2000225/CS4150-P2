@@ -80,7 +80,6 @@ void Mob::move(float deltaTSec)
 		destPos = m_pWaypoint ? *m_pWaypoint : m_Pos;
 	}
 
-
 	// compare it to all mobs and turrets (for loop)
 	// have a vector of distRemaining and moveVec
 	// get the distance to other mobs
@@ -154,6 +153,13 @@ void Mob::move(float deltaTSec)
 				nextNewVelocity *= m_Stats.getSpeed();
 			}
 			m_Velocity = nextNewVelocity;
+			if (xStop) {
+				std::cout << std::string(" x blocked HERE") << std::endl;
+				nextNewVelocity.x = 0;
+			}
+			if (yStop) {
+				nextNewVelocity.y = 0;
+			}
 
 			Vec2 newOffsetVector = nextNewVelocity * deltaTSec;
 			m_Pos += newOffsetVector;
@@ -163,6 +169,7 @@ void Mob::move(float deltaTSec)
 			// Vec2 nextPos = m_Pos + (moveVec * moveDist);
 			Vec2 velocity = velocityVector;
 			if (xStop) {
+				std::cout << std::string(" x blocked ") << std::endl;
 				velocity.x = 0;
 			}
 			if (yStop) {
@@ -231,6 +238,7 @@ bool Mob::checkMapEdgesCollides(Vec2 newPos) {
 }
 
 bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
+	std::cout << std::string(" method called at least ") << std::endl;
 	std::shared_ptr<Vec2>river;
 	if (newPos.x >= RIVER_LEFT_X
 		&& newPos.x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
@@ -251,31 +259,34 @@ bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 		river = std::make_shared<Vec2>(Vec2((LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
 	}
 	else {
+		std::cout << std::string(" does not  river ") << std::endl;
 		xStop = false;
 		return false;
 	}
-	if (river->x == (BRIDGE_WIDTH + LEFT_BRIDGE_CENTER_X / 2.0) - 0.5) {
-		if (newPos.x > river->x + ((RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH) / 2)) {
-			return true;
-			xStop = true;
-		}
-		else {
-			xStop = true;
-			return true;
-		}
-	}
-	else if (river->x == RIVER_LEFT_X) {
-		xStop = true;
-		return true;
-	}
-	else {
-		xStop = true;
-		return true;
-	}
+	std::cout << std::string(" has river ") << std::endl;
+	xStop = true;
+	return true;
+	//if (river->x == (BRIDGE_WIDTH + LEFT_BRIDGE_CENTER_X / 2.0) - 0.5) {
+	//	if (newPos.x > river->x + ((RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH) / 2)) {
+	//		xStop = true;
+	//		return true;
+	//	}
+	//	else {
+	//		xStop = true;
+	//		return true;
+	//	}
+	//}
+	//else if (river->x == RIVER_LEFT_X) {
+	//	xStop = true;
+	//	return true;
+	//}
+	//else {
+	//	xStop = true;
+	//	return true;
+	//}
 
-	return false;
+	//return false;
 }
-
 
 bool Mob::checkMapEdges(float elapsedTime) {
 	float shiftSize = this->getStats().getSize();
@@ -439,7 +450,12 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 		p *= (float)elapsedTime;
 
 		Vec2 tempPos = otherMob->m_Pos - p;
-		if (!checkMapEdgesCollides(tempPos) && !checkRiverEdgesCollides(tempPos)) {
+		// otherMob->m_Pos -= p;
+		// std::cout << std::string(" gets here??") << std::endl;
+		// checkRiverEdgesCollides(tempPos);
+		if (!checkMapEdgesCollides(tempPos) && !checkRiverEdgesCollides(tempPos)
+			&& !checkBuildingsCollides(tempPos, true)
+			&& !checkBuildingsCollides(tempPos, false)) {
 			otherMob->m_Pos -= p;
 		}
 	}
@@ -447,10 +463,65 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 		p *= (float)this->getStats().getSpeed();
 		p *= (float)elapsedTime;
 		Vec2 tempPos = m_Pos - p;
-		if (!checkRiverEdgesCollides(tempPos)) {
+		std::cout << std::string(" 2 gets here??") << std::endl;
+		// checkRiverEdgesCollides(tempPos);
+		// m_Pos += p;
+		if (!checkMapEdgesCollides(tempPos) && !checkRiverEdgesCollides(tempPos)
+			&& !checkBuildingsCollides(tempPos, true)
+			&& !checkBuildingsCollides(tempPos, false)) {
 			m_Pos += p;
 		}
 	}
+}
+
+bool Mob::checkBuildingsCollides(Vec2 newPos, bool isNorth) {
+	const Player& player = Game::get().getPlayer(isNorth);
+	for (Entity* building : player.getBuildings())
+	{
+		float buildingHalfSize = building->getStats().getSize() / 2;
+		Vec2 buildingPos = building->getPosition();
+		float r1RightEdge = buildingPos.x + buildingHalfSize;
+		float r1LeftEdge = buildingPos.x - buildingHalfSize;
+		float r1TopEdge = buildingPos.y + buildingHalfSize;
+		float r1BottomEdge = buildingPos.y - buildingHalfSize;
+
+		float thisSize = this->getStats().getSize();
+		float halfSize = (float)thisSize / 2;
+		float r2RightEdge = newPos.x + halfSize;
+		float r2LeftEdge = newPos.x - halfSize;
+		float r2TopEdge = newPos.y + halfSize;
+		float r2BottomEdge = newPos.y - halfSize;
+
+		if (r1RightEdge >= r2LeftEdge &&
+			r1LeftEdge <= r2RightEdge &&
+			r1TopEdge >= r2BottomEdge &&
+			r1BottomEdge <= r2TopEdge) {
+			// std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
+			// float shiftSize;
+			Vec2 p = Vec2(newPos.x - building->getPosition().x,
+				newPos.y - building->getPosition().y);
+			p.normalize();
+			if (r1RightEdge >= r2LeftEdge) {
+				xStop = true;
+				return true;
+			}
+			else if (r1LeftEdge <= r2RightEdge) {
+				xStop = true;
+				return true;
+			}
+			else if (r1TopEdge >= r2BottomEdge) {
+				yStop = true;
+				return true;
+			}
+			else if (r1BottomEdge <= r2TopEdge) {
+				yStop = true;
+				return true;
+			}
+		}
+	}
+	yStop = false;
+	xStop = false;
+	return false;
 }
 
 void Mob::checkBuildings(float elapsedTime, bool isNorth) {
@@ -458,6 +529,7 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 	const Player& player = Game::get().getPlayer(isNorth);
 	Vec2 velocityVec;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
+	bool collides = false;
 	for (Entity* building : player.getBuildings())
 	{
 		float buildingHalfSize = building->getStats().getSize() / 2;
@@ -487,21 +559,29 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 				shiftSize = r1RightEdge - r2LeftEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.x += shiftSize;
+				// xStop = true;
+				collides = true;
 			}
 			else if (r1LeftEdge <= r2RightEdge) {
 				shiftSize = r2RightEdge - r1LeftEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.x -= shiftSize;
+				// xStop = true;
+				collides = true;
 			}
 			else if (r1TopEdge >= r2BottomEdge) {
 				shiftSize = r1TopEdge - r2BottomEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.y += shiftSize;
+				// yStop = true;
+				collides = true;
 			}
 			else if (r1BottomEdge <= r2TopEdge) {
 				shiftSize = r2TopEdge - r1BottomEdge;
 				shiftSize = std::min(maxDist, shiftSize);
 				p.y -= shiftSize;
+				// yStop = true;
+				collides = true;
 			}
 
 			p *= (float)this->getStats().getSpeed();
@@ -509,6 +589,11 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 			m_Pos += p;
 		}
 	}
+	//if (!collides) {
+	//	yStop = false;
+	//	xStop = false;
+	//}
+	// do smth when they attacking
 }
 
 Entity* Mob::getMostThreateningMob(Vec2 ahead, Vec2 ahead2) {
