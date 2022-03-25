@@ -31,10 +31,6 @@ public:
 
     virtual void tick(float deltaTSec);
 
-    void checkBuildings(float elapsedTime, bool isNorth);
-    void checkRiver(float elapsedTime);
-    bool checkMapEdges(float elapsedTime);
-
 protected:
     void move(float deltaTSec);
     const Vec2* pickWaypoint();
@@ -42,6 +38,9 @@ protected:
     Entity* getMostThreateningMob(Vec2 ahead, Vec2 ahead2);
     bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
     void processCollision(Entity* otherMob, float elapsedTime);
+    void checkBuildings(float elapsedTime, bool isNorth);
+    void checkRiver(float elapsedTime);
+    bool checkMapEdges(float elapsedTime);
     bool checkMapEdgesCollides(Vec2 newPos);
 private:
     const Vec2* m_pWaypoint;
