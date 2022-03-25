@@ -223,15 +223,19 @@ void Mob::move(float deltaTSec)
 
 // Determine if the given Vec2 position is going outside of the map. 
 bool Mob::checkMapEdgesCollides(Vec2 newPos) {
+	// Out of right side of map{
 	if (newPos.x > GAME_GRID_WIDTH) {
 		return true;
 	}
+	// Out of left side of map
 	if (newPos.x < 0.0f) {
 		return true;
 	}
+	// Out of bottom side of map
 	if (newPos.y > GAME_GRID_HEIGHT) {
 		return true;
 	}
+	// Out of top side of map
 	if (newPos.y < 0) {
 		return true;
 	}
@@ -243,18 +247,21 @@ bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 	std::cout << std::string(" method called at least ") << std::endl;
 	std::shared_ptr<Vec2>river;
 	// Make a Vec2 for the river edges depending on what edges the collision is occuring. 
+	// Left river
 	if (newPos.x >= RIVER_LEFT_X
 		&& newPos.x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
 		&& newPos.y >= RIVER_TOP_Y
 		&& newPos.y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
 		river = std::make_shared<Vec2>(Vec2(RIVER_LEFT_X, RIVER_TOP_Y));
 	}
+	// Middle river
 	else if (newPos.x >= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
 		&& newPos.x <= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (SCREEN_WIDTH_PIXELS - RIGHT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
 		&& newPos.y >= RIVER_TOP_Y
 		&& newPos.y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
 		river = std::make_shared<Vec2>(Vec2((RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
 	}
+	// Right river
 	else if (newPos.x >= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
 		&& newPos.x <= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH)
 		&& newPos.y >= RIVER_TOP_Y
@@ -263,6 +270,7 @@ bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 	}
 	else {
 		std::cout << std::string(" does not  river ") << std::endl;
+		// Does not overlap with river
 		xStop = false;
 		return false;
 	}
@@ -300,6 +308,7 @@ bool Mob::checkMapEdges(float elapsedTime) {
 	Vec2 p = Vec2(this->m_Pos.x - targetPos.x, this->m_Pos.y - targetPos.y);
 	p.normalize();
 	bool adjusted = false;
+	// Out of right side of map. 
 	if (this->getPosition().x + (mobSize / 2) > GAME_GRID_WIDTH) {
 		std::cout << std::string("going off screen to right") << std::endl;
 		shiftSize = (this->getPosition().x + (mobSize / 2)) - GAME_GRID_WIDTH;
@@ -310,6 +319,7 @@ bool Mob::checkMapEdges(float elapsedTime) {
 	else {
 		xStop = false;
 	}
+	// Out of left side of map
 	if (this->getPosition().x - (mobSize / 2) < 0.0f) {
 		std::cout << std::string("going off screen to left") << std::endl;
 		shiftSize = std::abs(this->getPosition().x -(mobSize / 2));
@@ -320,6 +330,7 @@ bool Mob::checkMapEdges(float elapsedTime) {
 	else {
 		xStop = false;
 	}
+	// Out of bottom side of map
 	if (this->getPosition().y + (mobSize / 2) > GAME_GRID_HEIGHT) {
 		shiftSize = (this->getPosition().y + (mobSize / 2)) - GAME_GRID_HEIGHT;
 		p.y -= shiftSize ;
@@ -329,6 +340,7 @@ bool Mob::checkMapEdges(float elapsedTime) {
 	else {
 		yStop = false;
 	}
+	// Out of top side of map
 	if (this->getPosition().y - (mobSize / 2) < 0) {
 		shiftSize = std::abs(this->getPosition().y - (mobSize / 2));
 		p.y += shiftSize;
@@ -355,18 +367,21 @@ void Mob::checkRiver(float elapsedTime) {
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
 	std::shared_ptr<Vec2>river;
 	// Make a Vec2 for the river edges depending on what edges the collision is occuring. 
+	// Left river
 	if (this->getPosition().x >= RIVER_LEFT_X
 		&& this->getPosition().x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
 		&& this->getPosition().y >= RIVER_TOP_Y
 		&& this->getPosition().y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
 		river = std::make_shared<Vec2>(Vec2(RIVER_LEFT_X, RIVER_TOP_Y));
 	}
+	// Middle river
 	else if (this->getPosition().x >= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
 		&& this->getPosition().x <= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (SCREEN_WIDTH_PIXELS - RIGHT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
 		&& this->getPosition().y >= RIVER_TOP_Y
 		&& this->getPosition().y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
 		river = std::make_shared<Vec2>(Vec2((RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
 	}
+	// Right river
 	else if (this->getPosition().x >= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
 		&& this->getPosition().x <= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH)
 		&& this->getPosition().y >= RIVER_TOP_Y
@@ -374,6 +389,7 @@ void Mob::checkRiver(float elapsedTime) {
 		river = std::make_shared<Vec2>(Vec2((LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
 	}
 	else {
+		// Does not overlap with river
 		return;
 	}
 	Vec2 p = Vec2(this->m_Pos.x - targetPos.x, this->m_Pos.y - targetPos.y);
