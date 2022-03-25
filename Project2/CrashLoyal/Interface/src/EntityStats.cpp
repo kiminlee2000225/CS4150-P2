@@ -31,7 +31,7 @@ public:
     virtual MobType getMobType() const { return Swordsman; }
     virtual float getElixirCost() const { return 3.f; }
     virtual int getMaxHealth() const { return 1452; }
-    virtual float getSpeed() const { return 3.f; }
+    virtual float getSpeed() const { return 4.f; }
     virtual float getSize() const { return 0.5f; }
     virtual float getMass() const { return 3.f; }
     virtual TargetType getTargetType() const { return Any; }

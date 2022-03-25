@@ -42,6 +42,7 @@ protected:
     void checkRiver(float elapsedTime);
     bool checkMapEdges(float elapsedTime);
     bool checkMapEdgesCollides(Vec2 newPos);
+    bool checkRiverEdgesCollides(Vec2 newPos);
 private:
     const Vec2* m_pWaypoint;
     Vec2 targetPos;

@@ -113,7 +113,7 @@ void Mob::move(float deltaTSec)
 		// std::cout << std::string(" first ") << std::endl;
 		const float MAX_SEE_AHEAD = 5;
 		Vec2 ahead;
-		ahead = m_Pos + normalizedVec;
+		ahead = m_Pos + moveVec;
 		ahead *= MAX_SEE_AHEAD;
 		//ahead.x = m_Pos.x + normalizedVec *MAX_SEE_AHEAD;
 		//ahead.y = m_Pos.y + normalizedVec *MAX_SEE_AHEAD;
@@ -138,7 +138,8 @@ void Mob::move(float deltaTSec)
 			Vec2 avoidanceForce;
 			avoidanceForce = ahead - mostThreateningMob->getPosition();
 			float squareRadius = ((float)sqrt(2) * mostThreateningMob->getStats().getSize()) / 2;
-			avoidanceForce = avoidanceForce / avoidanceForce.length();
+			// avoidanceForce = avoidanceForce / avoidanceForce.length();
+			avoidanceForce.normalize();
 			Vec2 force = avoidanceForce * squareRadius;
 			Vec2 acc = force / m_Stats.getMass();
 			// float acc = force / m_Stats.getMass();
@@ -226,6 +227,52 @@ bool Mob::checkMapEdgesCollides(Vec2 newPos) {
 	if (newPos.y < 0) {
 		return true;
 	}
+	return false;
+}
+
+bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
+	std::shared_ptr<Vec2>river;
+	if (newPos.x >= RIVER_LEFT_X
+		&& newPos.x <= RIVER_LEFT_X + (LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
+		&& newPos.y >= RIVER_TOP_Y
+		&& newPos.y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
+		river = std::make_shared<Vec2>(Vec2(RIVER_LEFT_X, RIVER_TOP_Y));
+	}
+	else if (newPos.x >= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
+		&& newPos.x <= (RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (SCREEN_WIDTH_PIXELS - RIGHT_BRIDGE_CENTER_X - BRIDGE_WIDTH / 2.0)
+		&& newPos.y >= RIVER_TOP_Y
+		&& newPos.y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
+		river = std::make_shared<Vec2>(Vec2((RIGHT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
+	}
+	else if (newPos.x >= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5)
+		&& newPos.x <= (LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5) + (RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH)
+		&& newPos.y >= RIVER_TOP_Y
+		&& newPos.y <= RIVER_TOP_Y + (RIVER_BOT_Y - RIVER_TOP_Y)) {
+		river = std::make_shared<Vec2>(Vec2((LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
+	}
+	else {
+		xStop = false;
+		return false;
+	}
+	if (river->x == (BRIDGE_WIDTH + LEFT_BRIDGE_CENTER_X / 2.0) - 0.5) {
+		if (newPos.x > river->x + ((RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH) / 2)) {
+			return true;
+			xStop = true;
+		}
+		else {
+			xStop = true;
+			return true;
+		}
+	}
+	else if (river->x == RIVER_LEFT_X) {
+		xStop = true;
+		return true;
+	}
+	else {
+		xStop = true;
+		return true;
+	}
+
 	return false;
 }
 
@@ -392,14 +439,17 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 		p *= (float)elapsedTime;
 
 		Vec2 tempPos = otherMob->m_Pos - p;
-		if (!checkMapEdgesCollides(tempPos)) {
+		if (!checkMapEdgesCollides(tempPos) && !checkRiverEdgesCollides(tempPos)) {
 			otherMob->m_Pos -= p;
 		}
 	}
 	else {
 		p *= (float)this->getStats().getSpeed();
 		p *= (float)elapsedTime;
-		m_Pos += p;
+		Vec2 tempPos = m_Pos - p;
+		if (!checkRiverEdgesCollides(tempPos)) {
+			m_Pos += p;
+		}
 	}
 }
 
