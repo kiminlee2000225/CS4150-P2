@@ -80,12 +80,7 @@ void Mob::move(float deltaTSec)
 		destPos = m_pWaypoint ? *m_pWaypoint : m_Pos;
 	}
 
-	// compare it to all mobs and turrets (for loop)
-	// have a vector of distRemaining and moveVec
-	// get the distance to other mobs
-
 	targetPos = destPos;
-	// Actually do the moving
 	Vec2 moveVec = destPos - m_Pos;
 	Vec2 normalizedVec = moveVec / moveVec.length();
 	Vec2 velocityVector = normalizedVec * m_Stats.getSpeed();
@@ -93,7 +88,6 @@ void Mob::move(float deltaTSec)
 	float distRemaining = moveVec.normalize();
 	float moveDist = m_Stats.getSpeed() * deltaTSec;
 
-	// if we're moving to m_pTarget, don't move into it
 	if (bMoveToTarget)
 	{
 		assert(m_pTarget);
@@ -103,48 +97,20 @@ void Mob::move(float deltaTSec)
 
 	if (moveDist <= distRemaining)
 	{
-		// float offsetVector = velocityVector * deltaTSec; // <-- distance
-		 //Vec2 nextPos;
-		 //nextPos.x = m_Pos.x + offsetVector;
-		 //nextPos.y = m_Pos.y + offsetVector;
-		 //m_Pos = nextPos;
-
-		// std::cout << std::string(" first ") << std::endl;
 		const float MAX_SEE_AHEAD = 5;
 		Vec2 ahead;
 		ahead = m_Pos + moveVec;
 		ahead *= MAX_SEE_AHEAD;
-		//ahead.x = m_Pos.x + normalizedVec *MAX_SEE_AHEAD;
-		//ahead.y = m_Pos.y + normalizedVec *MAX_SEE_AHEAD;
 		Vec2 ahead2 = ahead * 0.5;
 		Entity* mostThreateningMob = getMostThreateningMob(ahead, ahead2);
-		// std::pair<Entity*, const Vec2> pair = getMostThreateningMob();
 		if (mostThreateningMob != nullptr) {
-			std::cout << std::string(" most threatening mob is NOT null ") << std::endl;
-			// std::cout << std::string(" most threatening mob is NOT null ") << std::endl;
-			 // std::cout <<  std::string(" first ")  << std::endl;
-
-			 // notes from Kevin Dill:
-			 // calculate for vectors (velocity) with speed and direction, not just speed and its ending position. 
-			 // my acc is being used as an offset. 
-			 // might not be multiplying by elapsedTime which is deltaTSec
-			 // newPos is the previous position + velocity * deltaTSec
-			 // combine all steering forces to get the overall steering force. 
-			 // m / s^2   * s .     acc * elapsedTime = velocity
-			 // 
-			 // use assert() for debugging.
-
 			Vec2 avoidanceForce;
 			avoidanceForce = ahead - mostThreateningMob->getPosition();
 			float squareRadius = ((float)sqrt(2) * mostThreateningMob->getStats().getSize()) / 2;
-			// avoidanceForce = avoidanceForce / avoidanceForce.length();
 			avoidanceForce.normalize();
 			Vec2 force = avoidanceForce * squareRadius;
 			Vec2 acc = force / m_Stats.getMass();
-			// float acc = force / m_Stats.getMass();
 
-			 // 2) multiply combined steering force (acceleration) by elapsed time (deltaTSec), 
-			 // add to previous velocity
 			Vec2 newVelocity = acc * deltaTSec; // <-- velocity
 			Vec2 nextNewVelocity = velocityVector + newVelocity;
 
@@ -154,7 +120,6 @@ void Mob::move(float deltaTSec)
 			}
 			m_Velocity = nextNewVelocity;
 			if (xStop) {
-				std::cout << std::string(" x blocked HERE") << std::endl;
 				nextNewVelocity.x = 0;
 			}
 			if (yStop) {
@@ -165,11 +130,8 @@ void Mob::move(float deltaTSec)
 			m_Pos += newOffsetVector;
 		}
 		else {
-			// std::cout << std::string(" most threatening mob is null ") << std::endl;
-			// Vec2 nextPos = m_Pos + (moveVec * moveDist);
 			Vec2 velocity = velocityVector;
 			if (xStop) {
-				std::cout << std::string(" x blocked ") << std::endl;
 				velocity.x = 0;
 			}
 			if (yStop) {
@@ -177,7 +139,6 @@ void Mob::move(float deltaTSec)
 			}
 			Vec2 velocityNormal;
 			Vec2 offset;
-			//  std::cout << std::string("a: ") << velocity.length() << std::endl;
 			if (velocity.length() > m_Stats.getSpeed()) {
 				velocity /= velocity.length();
 				velocity *= m_Stats.getSpeed();
@@ -185,15 +146,6 @@ void Mob::move(float deltaTSec)
 			Vec2 distance = velocity * deltaTSec;
 
 			Vec2 nextPos = m_Pos + distance;
-			// nextPos = checkBuildingCollision(nextPos, deltaTSec, velocity); // <-- comment this out 
-			//Vec2 buildingVelocity = checkBuildingCollision(nextPos, deltaTSec);
-			//velocity = velocityVector + buildingVelocity;
-			//if (velocity.length() > m_Stats.getSpeed()) {
-			//    velocity /= velocity.length();
-			//    velocity *= m_Stats.getSpeed();
-			//}
-			//distance = velocity * deltaTSec;
-			//nextPos = m_Pos + distance;
 			m_Pos = nextPos;
 		}
 	}
@@ -244,7 +196,6 @@ bool Mob::checkMapEdgesCollides(Vec2 newPos) {
 
 // Determine if the given Vec2 position is overlapping with the river.
 bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
-	std::cout << std::string(" method called at least ") << std::endl;
 	std::shared_ptr<Vec2>river;
 	// Make a Vec2 for the river edges depending on what edges the collision is occuring. 
 	// Left river
@@ -269,34 +220,12 @@ bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 		river = std::make_shared<Vec2>(Vec2((LEFT_BRIDGE_CENTER_X + BRIDGE_WIDTH / 2.0 - 0.5), RIVER_TOP_Y));
 	}
 	else {
-		std::cout << std::string(" does not  river ") << std::endl;
 		// Does not overlap with river
 		xStop = false;
 		return false;
 	}
-	std::cout << std::string(" has river ") << std::endl;
 	xStop = true;
 	return true;
-	//if (river->x == (BRIDGE_WIDTH + LEFT_BRIDGE_CENTER_X / 2.0) - 0.5) {
-	//	if (newPos.x > river->x + ((RIGHT_BRIDGE_CENTER_X - LEFT_BRIDGE_CENTER_X - BRIDGE_WIDTH) / 2)) {
-	//		xStop = true;
-	//		return true;
-	//	}
-	//	else {
-	//		xStop = true;
-	//		return true;
-	//	}
-	//}
-	//else if (river->x == RIVER_LEFT_X) {
-	//	xStop = true;
-	//	return true;
-	//}
-	//else {
-	//	xStop = true;
-	//	return true;
-	//}
-
-	//return false;
 }
 
 // Check if the mob is colliding with or overlapping with the edge of the map screen. 
@@ -310,7 +239,6 @@ bool Mob::checkMapEdges(float elapsedTime) {
 	bool adjusted = false;
 	// Out of right side of map. 
 	if (this->getPosition().x + (mobSize / 2) > GAME_GRID_WIDTH) {
-		std::cout << std::string("going off screen to right") << std::endl;
 		shiftSize = (this->getPosition().x + (mobSize / 2)) - GAME_GRID_WIDTH;
 		p.x -= shiftSize;
 		adjusted = true;
@@ -321,7 +249,6 @@ bool Mob::checkMapEdges(float elapsedTime) {
 	}
 	// Out of left side of map
 	if (this->getPosition().x - (mobSize / 2) < 0.0f) {
-		std::cout << std::string("going off screen to left") << std::endl;
 		shiftSize = std::abs(this->getPosition().x -(mobSize / 2));
 		p.x += shiftSize;
 		adjusted = true;
@@ -480,9 +407,6 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 		p *= (float)elapsedTime;
 
 		Vec2 tempPos = otherMob->m_Pos - p;
-		// otherMob->m_Pos -= p;
-		// std::cout << std::string(" gets here??") << std::endl;
-		// checkRiverEdgesCollides(tempPos);
 		if (!checkMapEdgesCollides(tempPos) && !checkRiverEdgesCollides(tempPos)
 			&& !checkBuildingsCollides(tempPos, true)
 			&& !checkBuildingsCollides(tempPos, false)) {
@@ -493,9 +417,6 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 		p *= (float)this->getStats().getSpeed();
 		p *= (float)elapsedTime;
 		Vec2 tempPos = m_Pos - p;
-		std::cout << std::string(" 2 gets here??") << std::endl;
-		// checkRiverEdgesCollides(tempPos);
-		// m_Pos += p;
 		if (!checkMapEdgesCollides(tempPos) && !checkRiverEdgesCollides(tempPos)
 			&& !checkBuildingsCollides(tempPos, true)
 			&& !checkBuildingsCollides(tempPos, false)) {
@@ -527,8 +448,6 @@ bool Mob::checkBuildingsCollides(Vec2 newPos, bool isNorth) {
 			r1LeftEdge <= r2RightEdge &&
 			r1TopEdge >= r2BottomEdge &&
 			r1BottomEdge <= r2TopEdge) {
-			// std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
-			// float shiftSize;
 			Vec2 p = Vec2(newPos.x - building->getPosition().x,
 				newPos.y - building->getPosition().y);
 			p.normalize();
