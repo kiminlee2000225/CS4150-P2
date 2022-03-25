@@ -233,8 +233,24 @@ void Mob::move(float deltaTSec)
 	checkMapEdges(deltaTSec);
 }
 
+bool Mob::checkMapEdgesCollides(Vec2 newPos) {
+	if (newPos.x > GAME_GRID_WIDTH) {
+		return true;
+	}
+	if (newPos.x < 0.0f) {
+		return true;
+	}
+	if (newPos.y > GAME_GRID_HEIGHT) {
+		return true;
+	}
+	if (newPos.y < 0) {
+		return true;
+	}
+	return false;
+}
 
-void Mob::checkMapEdges(float elapsedTime) {
+
+bool Mob::checkMapEdges(float elapsedTime) {
 	float shiftSize = this->getStats().getSize();
 	float mobSize = this->getStats().getSize();
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
@@ -287,7 +303,9 @@ void Mob::checkMapEdges(float elapsedTime) {
 		p *= (float)this->getStats().getSpeed();
 		p *= (float)elapsedTime;
 		m_Pos += p;
+		return true;
 	}
+	return false;
 
 }
 
@@ -344,102 +362,66 @@ void Mob::checkRiver(float elapsedTime) {
 void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 	float shiftVal = 0.1f;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
-	if (this->getStats().getMass() > otherMob->getStats().getMass()) {
-		// std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
-		Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
-			this->m_Pos.y - otherMob->getPosition().y);
-		p.normalize();
-		float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
-		Vec2 otherMobPos = otherMob->getPosition();
-		float thisSize = this->getStats().getSize();
-		float halfSize = (float)thisSize / 2;
+	bool pushedBack = false;
+	Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
+		this->m_Pos.y - otherMob->getPosition().y);
+	p.normalize();
+	float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
+	Vec2 otherMobPos = otherMob->getPosition();
+	float thisSize = this->getStats().getSize();
+	float halfSize = (float)thisSize / 2;
 
-		float r1RightEdge = otherMobPos.x + otherMobHalfSize;
-		float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
-		float r1TopEdge = otherMobPos.y + otherMobHalfSize;
-		float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
+	float r1RightEdge = otherMobPos.x + otherMobHalfSize;
+	float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
+	float r1TopEdge = otherMobPos.y + otherMobHalfSize;
+	float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
 
-		float r2RightEdge = this->getPosition().x + halfSize;
-		float r2LeftEdge = this->getPosition().x - halfSize;
-		float r2TopEdge = this->getPosition().y + halfSize;
-		float r2BottomEdge = this->getPosition().y - halfSize;
+	float r2RightEdge = this->getPosition().x + halfSize;
+	float r2LeftEdge = this->getPosition().x - halfSize;
+	float r2TopEdge = this->getPosition().y + halfSize;
+	float r2BottomEdge = this->getPosition().y - halfSize;
 
-		if (r1RightEdge >= r2LeftEdge &&
-			r1LeftEdge <= r2RightEdge &&
-			r1TopEdge >= r2BottomEdge &&
-			r1BottomEdge <= r2TopEdge) {
-			float shiftSize;
-			if (r1RightEdge >= r2LeftEdge) {
-				shiftSize = r1RightEdge - r2LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.x += shiftSize;
-			}
-			else if (r1LeftEdge <= r2RightEdge) {
-				shiftSize = r2RightEdge - r1LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.x -= shiftSize;
-			}
-			else if (r1TopEdge >= r2BottomEdge) {
-				shiftSize = r1TopEdge - r2BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.y += shiftSize;
-			}
-			else if (r1BottomEdge <= r2TopEdge) {
-				shiftSize = r2TopEdge - r1BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.y -= shiftSize;
-			}
+	if (r1RightEdge >= r2LeftEdge &&
+		r1LeftEdge <= r2RightEdge &&
+		r1TopEdge >= r2BottomEdge &&
+		r1BottomEdge <= r2TopEdge) {
+		float shiftSize;
+		if (r1RightEdge >= r2LeftEdge) {
+			shiftSize = r1RightEdge - r2LeftEdge;
+			shiftSize = std::min(maxDist, shiftSize);
+			p.x += shiftSize;
 		}
+		else if (r1LeftEdge <= r2RightEdge) {
+			shiftSize = r2RightEdge - r1LeftEdge;
+			shiftSize = std::min(maxDist, shiftSize);
+			p.x -= shiftSize;
+		}
+		else if (r1TopEdge >= r2BottomEdge) {
+			shiftSize = r1TopEdge - r2BottomEdge;
+			shiftSize = std::min(maxDist, shiftSize);
+			p.y += shiftSize;
+		}
+		else if (r1BottomEdge <= r2TopEdge) {
+			shiftSize = r2TopEdge - r1BottomEdge;
+			shiftSize = std::min(maxDist, shiftSize);
+			p.y -= shiftSize;
+		}
+	}
+	if (this->getStats().getMass() > otherMob->getStats().getMass()) {
+		pushedBack = true;
+	}
+
+	if (pushedBack) {
 		p *= (float)otherMob->getStats().getSpeed();
 		p *= (float)elapsedTime;
-		otherMob->m_Pos -= p;
+		// otherMob->m_Pos -= p;
+
+		Vec2 tempPos = otherMob->m_Pos - p;
+		if (!checkMapEdgesCollides(tempPos)) {
+			otherMob->m_Pos -= p;
+		}
 	}
 	else {
-		// std::cout << std::string(" this mass is not greater than otherMob ") << std::endl;
-		Vec2 p = Vec2(this->m_Pos.x - otherMob->getPosition().x,
-			this->m_Pos.y - otherMob->getPosition().y);
-		p.normalize();
-		float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
-		Vec2 otherMobPos = otherMob->getPosition();
-		float thisSize = this->getStats().getSize();
-		float halfSize = (float)thisSize / 2;
-
-		float r1RightEdge = otherMobPos.x + otherMobHalfSize;
-		float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
-		float r1TopEdge = otherMobPos.y + otherMobHalfSize;
-		float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
-
-		float r2RightEdge = this->getPosition().x + halfSize;
-		float r2LeftEdge = this->getPosition().x - halfSize;
-		float r2TopEdge = this->getPosition().y + halfSize;
-		float r2BottomEdge = this->getPosition().y - halfSize;
-
-		if (r1RightEdge >= r2LeftEdge &&
-			r1LeftEdge <= r2RightEdge &&
-			r1TopEdge >= r2BottomEdge &&
-			r1BottomEdge <= r2TopEdge) {
-			float shiftSize;
-			if (r1RightEdge >= r2LeftEdge) {
-				shiftSize = r1RightEdge - r2LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.x += shiftSize;
-			}
-			else if (r1LeftEdge <= r2RightEdge) {
-				shiftSize = r2RightEdge - r1LeftEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.x -= shiftSize;
-			}
-			else if (r1TopEdge >= r2BottomEdge) {
-				shiftSize = r1TopEdge - r2BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.y += shiftSize;
-			}
-			else if (r1BottomEdge <= r2TopEdge) {
-				shiftSize = r2TopEdge - r1BottomEdge;
-				shiftSize = std::min(maxDist, shiftSize);
-				p.y -= shiftSize;
-			}
-		}
 		p *= (float)this->getStats().getSpeed();
 		p *= (float)elapsedTime;
 		m_Pos += p;
@@ -665,189 +647,3 @@ std::vector<Entity*> Mob::checkCollision()
 
 	return collidingMobs;
 }
-
-//void Mob::processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec) 
-//{
-//    float thisSize = this->getStats().getSize();
-//    float halfSize = (float) thisSize / 2;
-//    // TODO: maybe make both mobs shift and not only one (split the shift distance) so that the game feels more smooth.
-//    // This might not be possible with how the Entity is set up rn because i can't change otherMob's position 
-//
-//    const Player& northPlayer = Game::get().getPlayer(true);
-//    for (Entity* otherMob : northPlayer.getMobs())
-//    {
-//        float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
-//        Vec2 otherMobPos = otherMob->getPosition();
-//
-//        float r1RightEdge = otherMobPos.x + otherMobHalfSize;
-//        float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
-//        float r1TopEdge = otherMobPos.y + otherMobHalfSize;
-//        float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
-//
-//        float r2RightEdge = this->getPosition().x + halfSize;
-//        float r2LeftEdge = this->getPosition().x - halfSize;
-//        float r2TopEdge = this->getPosition().y + halfSize;
-//        float r2BottomEdge = this->getPosition().y - halfSize;
-//
-//        if (r1RightEdge >= r2LeftEdge &&
-//            r1LeftEdge <= r2RightEdge &&
-//            r1TopEdge >= r2BottomEdge &&
-//            r1BottomEdge <= r2TopEdge) {
-//            // std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
-//            float shiftSize;
-//            if (r1RightEdge >= r2LeftEdge) {
-//                shiftSize = r1RightEdge - r2LeftEdge;
-//                m_Pos.x += shiftSize;
-//            }
-//            else if (r1LeftEdge <= r2RightEdge) {
-//                shiftSize = r2RightEdge - r1LeftEdge;
-//                m_Pos.x -= shiftSize;
-//            }
-//            else if (r1TopEdge >= r2BottomEdge) {
-//                shiftSize = r1TopEdge - r2BottomEdge;
-//                m_Pos.y += shiftSize;
-//            }
-//            else if (r1BottomEdge <= r2TopEdge) {
-//                shiftSize = r2TopEdge - r1BottomEdge;
-//                m_Pos.y -= shiftSize;
-//            }
-//            // return nextPos;
-//        }
-//    }
-//
-//    const Player& southPlayer = Game::get().getPlayer(false);
-//    for (Entity* otherMob : southPlayer.getMobs())
-//    {
-//        float otherMobHalfSize = (float) otherMob->getStats().getSize() / 2;
-//        Vec2 otherMobPos = otherMob->getPosition();
-//
-//        float r1RightEdge = otherMobPos.x + otherMobHalfSize;
-//        float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
-//        float r1TopEdge = otherMobPos.y + otherMobHalfSize;
-//        float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
-//
-//        float r2RightEdge = this->getPosition().x + halfSize;
-//        float r2LeftEdge = this->getPosition().x - halfSize;
-//        float r2TopEdge = this->getPosition().y + halfSize;
-//        float r2BottomEdge = this->getPosition().y - halfSize;
-//
-//        if (r1RightEdge >= r2LeftEdge &&
-//            r1LeftEdge <= r2RightEdge &&
-//            r1TopEdge >= r2BottomEdge &&
-//            r1BottomEdge <= r2TopEdge) {
-//            // std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
-//            float shiftSize;
-//            if (r1RightEdge >= r2LeftEdge) {
-//                shiftSize = r1RightEdge - r2LeftEdge;
-//                m_Pos.x += shiftSize;
-//            }
-//            else if (r1LeftEdge <= r2RightEdge) {
-//                shiftSize = r2RightEdge - r1LeftEdge;
-//                m_Pos.x -= shiftSize;
-//            }
-//            else if (r1TopEdge >= r2BottomEdge) {
-//                shiftSize = r1TopEdge - r2BottomEdge;
-//                m_Pos.y += shiftSize;
-//            }
-//            else if (r1BottomEdge <= r2TopEdge) {
-//                shiftSize = r2TopEdge - r1BottomEdge;
-//                m_Pos.y -= shiftSize;
-//            }
-//            //   return nextPos;
-//        }
-//    }
-//    // return nextPos;
-//}
-
-//Vec2 Mob::checkMobCollision(Vec2 nextPos)
-//{
-//    float thisSize = this->getStats().getSize();
-//    float halfSize = (float) thisSize / 2;
-//    // TODO: maybe make both mobs shift and not only one (split the shift distance) so that the game feels more smooth.
-//    // This might not be possible with how the Entity is set up rn because i can't change otherMob's position 
-//
-//    const Player& northPlayer = Game::get().getPlayer(true);
-//    for (Entity* otherMob : northPlayer.getMobs())
-//    {
-//        float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
-//        Vec2 otherMobPos = otherMob->getPosition();
-//
-//        float r1RightEdge = otherMobPos.x + otherMobHalfSize;
-//        float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
-//        float r1TopEdge = otherMobPos.y + otherMobHalfSize;
-//        float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
-//
-//        float r2RightEdge = nextPos.x + halfSize;
-//        float r2LeftEdge = nextPos.x - halfSize;
-//        float r2TopEdge = nextPos.y + halfSize;
-//        float r2BottomEdge = nextPos.y - halfSize;
-//
-//        if (r1RightEdge >= r2LeftEdge &&
-//            r1LeftEdge <= r2RightEdge &&
-//            r1TopEdge >= r2BottomEdge &&
-//            r1BottomEdge <= r2TopEdge) {
-//            // std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
-//            float shiftSize;
-//            if (r1RightEdge >= r2LeftEdge) {
-//                shiftSize = r1RightEdge - r2LeftEdge;
-//                nextPos.x += shiftSize;
-//            }
-//            else if (r1LeftEdge <= r2RightEdge) {
-//                shiftSize = r2RightEdge - r1LeftEdge;
-//                nextPos.x -= shiftSize;
-//            }
-//            else if (r1TopEdge >= r2BottomEdge) {
-//                shiftSize = r1TopEdge - r2BottomEdge;
-//                nextPos.y += shiftSize;
-//            }
-//            else if (r1BottomEdge <= r2TopEdge) {
-//                shiftSize = r2TopEdge - r1BottomEdge;
-//                nextPos.y -= shiftSize;
-//            }
-//            // return nextPos;
-//        }
-//    }
-//
-//    const Player& southPlayer = Game::get().getPlayer(false);
-//    for (Entity* otherMob : southPlayer.getMobs())
-//    {
-//        float otherMobHalfSize = (float)otherMob->getStats().getSize() / 2;
-//        Vec2 otherMobPos = otherMob->getPosition();
-//
-//        float r1RightEdge = otherMobPos.x + otherMobHalfSize;
-//        float r1LeftEdge = otherMobPos.x - otherMobHalfSize;
-//        float r1TopEdge = otherMobPos.y + otherMobHalfSize;
-//        float r1BottomEdge = otherMobPos.y - otherMobHalfSize;
-//
-//        float r2RightEdge = nextPos.x + halfSize;
-//        float r2LeftEdge = nextPos.x - halfSize;
-//        float r2TopEdge = nextPos.y + halfSize;
-//        float r2BottomEdge = nextPos.y - halfSize;
-//
-//        if (r1RightEdge >= r2LeftEdge &&
-//            r1LeftEdge <= r2RightEdge &&
-//            r1TopEdge >= r2BottomEdge &&
-//            r1BottomEdge <= r2TopEdge) {
-//            // std::cout << this->getStats().getName() << std::string(" gon collide north") << std::endl;
-//            float shiftSize;
-//            if (r1RightEdge >= r2LeftEdge) {
-//                shiftSize = r1RightEdge - r2LeftEdge;
-//                nextPos.x += shiftSize;
-//            }
-//            else if (r1LeftEdge <= r2RightEdge) {
-//                shiftSize = r2RightEdge - r1LeftEdge;
-//                nextPos.x -= shiftSize;
-//            }
-//            else if (r1TopEdge >= r2BottomEdge) {
-//                shiftSize = r1TopEdge - r2BottomEdge;
-//                nextPos.y += shiftSize;
-//            }
-//            else if (r1BottomEdge <= r2TopEdge) {
-//                shiftSize = r2TopEdge - r1BottomEdge;
-//                nextPos.y -= shiftSize;
-//            }
-//            //   return nextPos;
-//        }
-//    }
-//     return nextPos;
-//}

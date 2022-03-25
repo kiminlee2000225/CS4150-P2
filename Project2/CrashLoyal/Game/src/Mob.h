@@ -31,19 +31,18 @@ public:
 
     virtual void tick(float deltaTSec);
 
+    void checkBuildings(float elapsedTime, bool isNorth);
+    void checkRiver(float elapsedTime);
+    bool checkMapEdges(float elapsedTime);
+
 protected:
     void move(float deltaTSec);
     const Vec2* pickWaypoint();
     std::vector<Entity*> checkCollision();
-    // void processCollision(Entity* otherMob, float deltaTSec, Vec2 moveVec);
     Entity* getMostThreateningMob(Vec2 ahead, Vec2 ahead2);
     bool lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob);
-    // Vec2 checkBuildingCollision(Vec2 nextPos, float deltaTSec, Vec2 vel);
-    void checkBuildings(float elapsedTime, bool isNorth);
     void processCollision(Entity* otherMob, float elapsedTime);
-    void checkRiver(float elapsedTime);
-    void checkMapEdges(float elapsedTime);
-   // Vec2 checkMobCollision(Ve)2 nextPos);
+    bool checkMapEdgesCollides(Vec2 newPos);
 private:
     const Vec2* m_pWaypoint;
     Vec2 targetPos;
