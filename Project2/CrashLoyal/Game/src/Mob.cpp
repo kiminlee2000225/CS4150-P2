@@ -221,6 +221,7 @@ void Mob::move(float deltaTSec)
 	checkMapEdges(deltaTSec);
 }
 
+// Determine if the given Vec2 position is going outside of the map. 
 bool Mob::checkMapEdgesCollides(Vec2 newPos) {
 	if (newPos.x > GAME_GRID_WIDTH) {
 		return true;
@@ -237,6 +238,7 @@ bool Mob::checkMapEdgesCollides(Vec2 newPos) {
 	return false;
 }
 
+// Determine if the given Vec2 position is overlapping with the river.
 bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 	std::cout << std::string(" method called at least ") << std::endl;
 	std::shared_ptr<Vec2>river;
@@ -288,6 +290,8 @@ bool Mob::checkRiverEdgesCollides(Vec2 newPos) {
 	//return false;
 }
 
+// Check if the mob is colliding with or overlapping with the edge of the map screen. 
+// If it is, make adjustments to the mob's position to avoid the mob going outside of the map.
 bool Mob::checkMapEdges(float elapsedTime) {
 	float shiftSize = this->getStats().getSize();
 	float mobSize = this->getStats().getSize();
@@ -343,6 +347,8 @@ bool Mob::checkMapEdges(float elapsedTime) {
 
 }
 
+// Check if the mob is colliding with or overlapping with the river. 
+// If it is, make adjustments to the mob's position to avoid collision/overlap. 
 void Mob::checkRiver(float elapsedTime) {
 	float shiftSize = 0.5f;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
@@ -393,6 +399,9 @@ void Mob::checkRiver(float elapsedTime) {
 	m_Pos += p;
 }
 
+// Check if any other mob is colliding with the mob. 
+// If it is, make adjustments to the mob's position to avoid collision. 
+// Do this while considering if the adjustment will cause any other collisions for the river, map, and buildings.
 void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 	float shiftVal = 0.1f;
 	float maxDist = m_Stats.getSpeed() * elapsedTime;
@@ -474,6 +483,7 @@ void Mob::processCollision(Entity* otherMob, float elapsedTime) {
 	}
 }
 
+// Determine if the given Vec2 position is overlapping/colliding with the building.
 bool Mob::checkBuildingsCollides(Vec2 newPos, bool isNorth) {
 	const Player& player = Game::get().getPlayer(isNorth);
 	for (Entity* building : player.getBuildings())
@@ -524,6 +534,8 @@ bool Mob::checkBuildingsCollides(Vec2 newPos, bool isNorth) {
 	return false;
 }
 
+// Check if any building is colliding with the mob. 
+// If it is, make adjustments to the mob's position to avoid collision. 
 void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 	float shiftSizeNew = 0.f;
 	const Player& player = Game::get().getPlayer(isNorth);
@@ -589,13 +601,9 @@ void Mob::checkBuildings(float elapsedTime, bool isNorth) {
 			m_Pos += p;
 		}
 	}
-	//if (!collides) {
-	//	yStop = false;
-	//	xStop = false;
-	//}
-	// do smth when they attacking
 }
 
+// Return the closest mob that is overlapping with the two given vectors. 
 Entity* Mob::getMostThreateningMob(Vec2 ahead, Vec2 ahead2) {
 	Entity* mostThreateningMob = nullptr;
 	const Player& northPlayer = Game::get().getPlayer(true);
@@ -627,11 +635,13 @@ Entity* Mob::getMostThreateningMob(Vec2 ahead, Vec2 ahead2) {
 	return mostThreateningMob;
 }
 
+// Calculate the distance in float of the mob and the given vector (ahead vector). 
 float distance(Entity* mob1, Vec2 ahead) {
 	return sqrt((mob1->getPosition().x - ahead.x) * (mob1->getPosition().x - ahead.x) +
 		(mob1->getPosition().y - ahead.y) * (mob1->getPosition().y - ahead.y));
 }
 
+// Determine if the two given ahead vectors intersect and overlap with the given mob's position.
 bool Mob::lineIntersectsMob(Vec2 ahead, Vec2 ahead2, Entity* mob) {
 	float mobRadius = ((float)sqrt(2) * mob->getStats().getSize()) / 2;
 
