@@ -23,12 +23,18 @@
 #pragma once
 
 #include "iController.h"
+#include "GameAI.h"
 
 class Controller_AI_KevinDill : public iController
 {
 public:
-    Controller_AI_KevinDill() {}
+    Controller_AI_KevinDill() {
+        ai.SetUpTree();
+    }
     virtual ~Controller_AI_KevinDill() {}
 
     void tick(float deltaTSec);
+
+private:
+    GameAI ai;
 };

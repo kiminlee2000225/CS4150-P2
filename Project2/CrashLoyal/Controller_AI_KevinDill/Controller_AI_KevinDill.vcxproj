@@ -19,6 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\GameAI.h" />
+    <ClInclude Include="src\Selector.h" />
+    <ClInclude Include="src\Sequence.h" />
+    <ClInclude Include="src\Tree.h" />
+    <ClInclude Include="src\Node.h" />
     <ClInclude Include="src\Controller_AI_KevinDill.h" />
   </ItemGroup>
   <ItemGroup>
